@@ -4,3 +4,6 @@ dependencies:
   - matplotlib
   - numpy
   - Pillow
+  - pytorch
+  - tensorflow
+  - torchvision

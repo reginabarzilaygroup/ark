@@ -67,6 +67,9 @@ class DICOMArray:
         for transform in transforms:
             self.add_transform(transform)
 
-    def apply_transform(self):
+    def apply_transforms(self, output_tensor=True):
+        if output_tensor:
+            self.transforms.append(transformers.TensorTransform)
+
         for transform in self.transforms:
             self.images = transform.apply(self.images)
