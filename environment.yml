@@ -1,0 +1,6 @@
+name: ark
+dependencies:
+  - pydicom>=2.2.2
+  - matplotlib
+  - numpy
+  - Pillow
