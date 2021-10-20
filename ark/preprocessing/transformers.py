@@ -24,7 +24,7 @@ class SubsampleTransform(Transform):
             images (ndarray): DICOM image numpy array
 
         Returns:
-            images (ndarray): Padded or truncated numpy array
+            ndarray: Padded or truncated numpy array
         """
         images_len = images.shape[0]
 
@@ -44,10 +44,6 @@ class SubsampleTransform(Transform):
         return images
 
 
-class ShiftTransform(Transform):
-    pass
-
-
 class ScaleTransform(Transform):
     def __init__(self, min_scale=0.0, max_scale=1.0):
         """Sets range in which to scale array values.
@@ -60,6 +56,14 @@ class ScaleTransform(Transform):
         self.max_scale = max_scale
 
     def apply(self, images):
+        """Scales array values to be between min_scale and max_scale
+
+        Args:
+            images (ndarray): Numpy image array
+
+        Returns:
+            ndarray: Scaled numpy image array
+        """
         images = (images - images.min()) / (images.max() - images.min())
         return (self.max_scale - self.min_scale) * images + self.min_scale
 
@@ -90,6 +94,6 @@ class TensorTransform(Transform):
             images (ndarray): Numpy image array to be transformed
 
         Returns:
-            images (Union[tf.Tensor, torch.Tensor]): Converted image tensor
+            Union[tf.Tensor, torch.Tensor]: Converted image tensor
         """
         return self.convert(images)

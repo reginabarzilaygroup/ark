@@ -19,12 +19,12 @@ def apply_windowing(image, center, width, bit_size=16):
 
     Args:
         image (ndarray): Numpy image array
-        center (int): Window center (or level)
-        width (int): Window width
+        center (float): Window center (or level)
+        width (float): Window width
         bit_size (int): Max bit size of pixel
 
     Returns:
-
+        ndarray: Numpy array of transformed images
     """
     y_min = 0
     y_max = (2**bit_size - 1)
@@ -55,7 +55,7 @@ def read_dicoms(fp, limit=None):
         limit (int, optional): Limit number of dicoms to be read
 
     Returns:
-        dicoms (list): List of pydicom Datasets
+        list: List of pydicom Datasets
     """
 
     if isinstance(fp, str) or isinstance(fp, Path):
