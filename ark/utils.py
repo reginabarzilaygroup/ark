@@ -6,19 +6,35 @@ import numpy as np
 import pydicom
 
 
-def apply_windowing(image, center, width, bit_depth=16):
-    """ Windowing function for custom DICOM center and width values. Algorithm implementation taken from pydicom:
-    https://pydicom.github.io/pydicom/stable/reference/generated/pydicom.pixel_data_handlers.apply_windowing.html#
+def apply_windowing(image, center, width, bit_size=16):
+    """Windowing function to transform image pixels for presentation.
+
+    Must be run after a DICOM modality LUT is applied to the image.
+
+    Windowing algorithm defined in DICOM standard:
+    http://dicom.nema.org/medical/dicom/2020b/output/chtml/part03/sect_C.11.2.html#sect_C.11.2.1.2
+
+    Reference implementation:
+    https://github.com/pydicom/pydicom/blob/da556e33b/pydicom/pixel_data_handlers/util.py#L460
+
+    Args:
+        image (ndarray): Numpy image array
+        center (int): Window center (or level)
+        width (int): Window width
+        bit_size (int): Max bit size of pixel
+
+    Returns:
+
     """
     y_min = 0
-    y_max = (2**bit_depth - 1)
+    y_max = (2**bit_size - 1)
     y_range = y_max - y_min
 
     c = center - 0.5
     w = width - 1
 
-    below = image <= (c - w / 2)
-    above = image > (c + w / 2)
+    below = image <= (c - w / 2)  # pixels to be set as black
+    above = image > (c + w / 2)  # pixels to be set as white
     between = np.logical_and(~below, ~above)
 
     image[below] = y_min
@@ -36,7 +52,7 @@ def read_dicoms(fp, limit=None):
 
     Args:
         fp (Union[str, Iterable]): Path to directory of DICOMs or list of file paths pointing to DICOMs
-        limit (int): limit number of dicoms to be read
+        limit (int, optional): Limit number of dicoms to be read
 
     Returns:
         dicoms (list): List of pydicom Datasets

@@ -10,9 +10,22 @@ class Transform:
 
 class SubsampleTransform(Transform):
     def __init__(self, sample_size=100):
+        """Sets target size of DICOM image array.
+
+        Args:
+            sample_size (int): Target size of image array
+        """
         self.sample_size = sample_size
 
     def apply(self, images):
+        """Either pads or truncates array to target sample size.
+
+        Args:
+            images (ndarray): DICOM image numpy array
+
+        Returns:
+            images (ndarray): Padded or truncated numpy array
+        """
         images_len = images.shape[0]
 
         if len(images) < self.sample_size:
@@ -25,9 +38,7 @@ class SubsampleTransform(Transform):
 
             images = np.pad(images, pad_width=pad_width, constant_values=0.0)
         elif len(images) > self.sample_size:
-            overflow = images_len - self.sample_size
-            remove = list(range(0, images_len + 1, images_len // overflow))[1:]
-
+            remove = np.round(np.linspace(0, images_len - 1, self.sample_size)).astype(int)
             images = np.delete(images, remove, axis=0)
 
         return images
@@ -38,7 +49,19 @@ class ShiftTransform(Transform):
 
 
 class ScaleTransform(Transform):
-    pass
+    def __init__(self, min_scale=0.0, max_scale=1.0):
+        """Sets range in which to scale array values.
+
+        Args:
+            min_scale (float): Lower bound of scale
+            max_scale (float): Upper bound of scale
+        """
+        self.min_scale = min_scale
+        self.max_scale = max_scale
+
+    def apply(self, images):
+        images = (images - images.min()) / (images.max() - images.min())
+        return (self.max_scale - self.min_scale) * images + self.min_scale
 
 
 class TensorTransform(Transform):
@@ -48,6 +71,11 @@ class TensorTransform(Transform):
     }
 
     def __init__(self, converter='torch'):
+        """Sets the type of tensor that will be returned by the transformation.
+
+        Args:
+            converter (str): String key that defines what kind of tensor to create
+        """
         if converter in self.converters:
             self.convert = self.converters[converter]
         else:
@@ -56,4 +84,12 @@ class TensorTransform(Transform):
             ))
 
     def apply(self, images):
+        """Converts a numpy image array to a tensor.
+
+        Args:
+            images (ndarray): Numpy image array to be transformed
+
+        Returns:
+            images (Union[tf.Tensor, torch.Tensor]): Converted image tensor
+        """
         return self.convert(images)
