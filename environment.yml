@@ -1,5 +1,7 @@
 name: ark
 dependencies:
+  - coverage
+  - flask
   - pydicom>=2.2.2
   - matplotlib
   - numpy
