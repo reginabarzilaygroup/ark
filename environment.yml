@@ -1,11 +1,9 @@
 name: ark
 dependencies:
-  - coverage
+  - python=3.6
+  - coverage<6.0
+  - coverage-badge
   - flask
-  - pydicom>=2.2.2
-  - matplotlib
-  - numpy
-  - Pillow
-  - pytorch
-  - tensorflow
-  - torchvision
+  - pip
+  - pip:
+      - pydicom>=2.2.2
