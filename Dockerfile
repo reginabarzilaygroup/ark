@@ -4,13 +4,16 @@ ENV NAME ark
 
 WORKDIR /app
 
-COPY requirements.txt .
+COPY requirements.txt requirements.txt
+
 RUN pip install -r requirements.txt
 
-COPY main.py .
-COPY api api
-COPY model model
+RUN apt-get update -y
+RUN apt-get install -y dcmtk
+
+COPY . .
+COPY ./model/onconet ./onconet
 
 EXPOSE 5000
 
-CMD python main.py
+CMD ["python", "main.py"]

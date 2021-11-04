@@ -2,7 +2,7 @@ from collections import Iterable
 from pathlib import Path
 
 
-def validate_post_json(req, required=None, max_size=8 * 10**6):
+def validate_post_json(req, required=None, max_size=8 * 10**8):
     """Validates the DICOM POST JSON payload.
 
     Args:
@@ -18,8 +18,8 @@ def validate_post_json(req, required=None, max_size=8 * 10**6):
 
     if req.content_length > max_size:
         raise RuntimeError("POST data too large: {} > {}".format(req.content_length, max_size))
-    elif req.is_json:
-        data = req.get_json()
+    elif req.form['data']:
+        data = req.form['data']
         invalid = []
 
         for item in required:
@@ -29,7 +29,7 @@ def validate_post_json(req, required=None, max_size=8 * 10**6):
         if invalid:
             raise RuntimeError("Invalid/missing keys in JSON: {}".format(invalid))
     else:
-        raise RuntimeError("POST data not JSON: {}".format(req.get_data()))
+        raise RuntimeError("POST data not JSON")
 
 
 def validate_list_paths(fp):

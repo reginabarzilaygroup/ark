@@ -5,5 +5,7 @@ dependencies:
   - coverage-badge
   - flask
   - pip
+  - pytorch
+  - torchvision
   - pip:
       - pydicom>=2.2.2
