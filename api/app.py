@@ -1,16 +1,17 @@
+import json
 import logging
 
 from flask import Flask
-from flask import abort, request
+from flask import request
 
-from api.utils import validate_post_json, validate_list_paths
+from api.utils import validate_post_request
 from api.config import MammoCancerMirai
 from model.model import run_model
-from model.utils import read_dicoms
 
 
 def build_app(config=None):
     app = Flask('ark')
+    logging.getLogger('ark').setLevel(logging.DEBUG)
 
     if config is not None:
         app.config.from_mapping(config)
@@ -19,27 +20,27 @@ def build_app(config=None):
 
     @app.route('/serve', methods=['POST'])
     def dicom():
-        app.logger.info("Request received at /dicom: {}".format(request.form.to_dict()))
-        app.logger.debug(request.form.to_dict())
+        """Legacy '/serve' endpoint, replicates same behavior as /dicom.
+        # TODO: Remove on 1.0
+        """
+        app.logger.info("Request received at /serve")
+        response = {'data': None, 'message': None, 'statusCode': 200}
+
         try:
-            response = {}
+            validate_post_request(request, required=['mrn', 'accession'])
+            app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
+            payload = json.loads(request.form['data'])
 
-            if "dicom" in request.files:
-                dicom_list = request.files.getlist("dicom")
-            elif request.data:
-                validate_post_json(request, required=['paths'])
+            # handle file upload
+            dicom_files = request.files.getlist("files")
+            app.logger.debug("Received {} files".format(len(dicom_files)))
 
-                payload = request.form.to_dict()['data']
-                dicom_list = validate_list_paths(payload['paths'])
-            else:
-                raise RuntimeError("Request does not contain a JSON body or `files` array upload")
-
-            # dicoms = read_dicoms(dicom_list)
-            dicoms = dicom_list
-            response["report"] = run_model(dicoms, app.config['ONCONET_ARGS'], request.form.to_dict()['data'])
-
-            return response, 200
+            response["data"] = run_model(dicom_files, app.config['ONCONET_ARGS'], payload=payload)
         except Exception as e:
-            abort(400, description=e)
+            app.logger.error(e)
+            response['message'] = str(e)
+            response['statusCode'] = 400
+
+        return response, response['statusCode']
 
     return app

@@ -1,36 +1,55 @@
-import tempfile
+import io
+import json
 import unittest
 from flask import request
 
 from api.app import build_app
-from api.utils import validate_list_paths, validate_post_json
+from api.utils import validate_post_request
 
 
 class APIUtilsTestCase(unittest.TestCase):
     def setUp(self):
         self.app = build_app()
+        self.data = {'data': json.dumps({'test': 12345}), 'files': [(io.BytesIO(b"12345"), 'test.png')]}
 
-    def test_validate_post_json_required(self):
-        requirements = [['paths'], ['test', 'paths']]
+    def test_validate_post_request(self):
+        with self.app.test_request_context('/dicom', data=self.data, method='POST'):
+            validate_post_request(request, required=['test'])
 
-        with self.app.test_request_context('/dicom', json={'test': 12345}, method='POST'):
-            for required in requirements:
-                with self.subTest(required=required):
-                    self.assertRaises(RuntimeError, validate_post_json, request, required=required)
+    def test_validate_post_request_missing_required(self):
+        with self.app.test_request_context('/dicom', data=self.data, method='POST'):
+            required = ['notest', 'nottest']
+            expected_str = "Missing keys in request JSON: {}".format(required)
 
-    def test_validate_post_json_max_size(self):
-        with self.app.test_request_context('/dicom', json={'test': 12345}, method='POST'):
-            self.assertRaises(RuntimeError, validate_post_json, request, max_size=0)
+            with self.assertRaises(RuntimeError) as cm:
+                validate_post_request(request, required=required)
 
-    def test_validate_post_json_is_json(self):
-        with self.app.test_request_context('/dicom', data={'test': 12345}, method='POST'):
-            self.assertRaises(RuntimeError, validate_post_json, request)
+            self.assertEqual(str(cm.exception), expected_str)
 
-    def test_validate_list_paths(self):
-        with tempfile.NamedTemporaryFile() as f:
-            self.assertRaises(NotADirectoryError, validate_list_paths, str(f.name))
+    def test_validate_post_request_max_size(self):
+        with self.app.test_request_context('/dicom', data=self.data, method='POST'):
+            max_size = 0
+            expected_str = "Request data too large: {} > {}".format(request.content_length, max_size)
 
-        self.assertRaises(RuntimeError, validate_list_paths, None)
+            with self.assertRaises(RuntimeError) as cm:
+                validate_post_request(request, max_size=max_size)
 
-        with tempfile.TemporaryDirectory() as d:
-            self.assertEqual(len(validate_list_paths(d)), 0)
+            self.assertEqual(str(cm.exception), expected_str)
+
+    def test_validate_post_request_missing_data(self):
+        with self.app.test_request_context('/dicom', data={}, method='POST'):
+            expected_str = "'data' not in request JSON"
+
+            with self.assertRaises(RuntimeError) as cm:
+                validate_post_request(request)
+
+            self.assertEqual(str(cm.exception), expected_str)
+
+    def test_validate_post_request_missing_files(self):
+        with self.app.test_request_context('/dicom', data={'data': ''}, method='POST'):
+            expected_str = "Request does not contain `files` array"
+
+            with self.assertRaises(RuntimeError) as cm:
+                validate_post_request(request)
+
+            self.assertEqual(str(cm.exception), expected_str)
