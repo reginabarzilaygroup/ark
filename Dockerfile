@@ -12,7 +12,6 @@ RUN apt-get update -y
 RUN apt-get install -y dcmtk
 
 COPY . .
-COPY ./model/onconet ./onconet
 
 EXPOSE 5000
 
