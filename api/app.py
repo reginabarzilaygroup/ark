@@ -31,7 +31,6 @@ def build_app(config=None):
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
             payload = json.loads(request.form['data'])
 
-            # handle file upload
             dicom_files = request.files.getlist("files")
             app.logger.debug("Received {} files".format(len(dicom_files)))
 

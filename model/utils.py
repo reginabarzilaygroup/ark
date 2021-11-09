@@ -1,8 +1,10 @@
 import logging
 from collections import Iterable
+from subprocess import Popen
 
 import numpy as np
 import pydicom
+from PIL import Image
 from pydicom.pixel_data_handlers.util import apply_modality_lut, apply_voi_lut
 
 logger = logging.getLogger('ark')
@@ -15,6 +17,7 @@ def apply_windowing(image, center, width, bit_depth=16, voi_type='LINEAR'):
     http://dicom.nema.org/medical/dicom/2020b/output/chtml/part03/sect_C.11.2.html#sect_C.11.2.1.2
     Reference implementation:
     https://github.com/pydicom/pydicom/blob/da556e33b/pydicom/pixel_data_handlers/util.py#L460
+
     Args:
         image (ndarray): Numpy image array
         center (float): Window center (or level)
@@ -75,7 +78,34 @@ def read_dicoms(dicom_list, limit=None):
     return dicoms
 
 
-def dicom_to_arr(dicom, auto=True, index=0):
+def dicom_to_image_dcmtk(dicom_path, image_path):
+    """Converts a dicom image to a grayscale 16-bit png image using dcmtk.
+
+    Convert DICOM to PNG using dcmj2pnm (support.dcmtk.org/docs/dcmj2pnm.html)
+    from dcmtk library (dicom.offis.de/dcmtk.php.en)
+
+    Arguments:
+        dicom_path(str): The path to the dicom file.
+        image_path(str): The path where the image will be saved.
+    """
+    default_window_level = 540
+    default_window_width = 580
+
+    dcm_file = pydicom.dcmread(dicom_path)
+    manufacturer = dcm_file.Manufacturer
+    series = dcm_file.SeriesDescription
+
+    if 'GE' in manufacturer:
+        Popen(['dcmj2pnm', '+on2', '--use-voi-lut', '1', dicom_path, image_path]).wait()
+    elif 'C-View' in series:
+        Popen(['dcmj2pnm', '+on2', '+Ww', default_window_level, default_window_width, dicom_path, image_path]).wait()
+    else:
+        Popen(['dcmj2pnm', '+on2', '--min-max-window', dicom_path, image_path]).wait()
+
+    return Image.open(image_path)
+
+
+def dicom_to_arr(dicom, auto=True, index=0, pillow=False):
     image = apply_modality_lut(dicom.pixel_array, dicom)
 
     if (0x0028, 0x1056) in dicom:
@@ -84,16 +114,19 @@ def dicom_to_arr(dicom, auto=True, index=0):
         voi_type = 'LINEAR'
 
     if 'GE' in dicom.Manufacturer:
+        logger.debug('GE')
         image = apply_voi_lut(image.astype(np.uint16), dicom, index=index)
 
         num_bits = dicom[0x0028, 0x3010].value[index][0x0028, 0x3002].value[2]
         image *= 2**(16 - num_bits)
     elif auto:
+        logger.debug('auto')
         window_center = -600
         window_width = 1500
 
         image = apply_windowing(image, window_center, window_width, voi_type=voi_type)
     else:
+        logger.debug('minmax')
         min_pixel = np.min(image)
         max_pixel = np.max(image)
         window_center = (min_pixel + max_pixel + 1) / 2
@@ -101,4 +134,9 @@ def dicom_to_arr(dicom, auto=True, index=0):
 
         image = apply_windowing(image, window_center, window_width, voi_type=voi_type)
 
-    return image.astype(np.uint16)
+    image = image.astype(np.uint16)
+
+    if pillow:
+        return Image.fromarray(image.astype(np.int32), mode='I')
+    else:
+        return image

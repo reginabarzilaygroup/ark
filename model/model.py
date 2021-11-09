@@ -1,16 +1,15 @@
 import logging
+import tempfile
 
-import numpy as np
-from PIL import Image
+import pydicom
 
 import model.onconet_wrapper as onconet
-import model.oncoqueries_wrapper as oncoqueries
-from model.utils import dicom_to_arr
+from model.utils import dicom_to_image_dcmtk, dicom_to_arr
 
 logger = logging.getLogger('ark')
 
 
-def get_info(dicom):
+def get_dicom_info(dicom):
     view_str = dicom.ViewPosition
     side_str = dicom.ImageLaterality
 
@@ -25,42 +24,45 @@ def get_info(dicom):
     return valid_view.index(view_str), valid_side.index(side_str)
 
 
-def run_model(dicoms, args, metadata):
-    report = {"testData": 123, "dicomsLen": len(dicoms)}
-    dicom_path = '/tmp/tmp.dcm'
-    image_path = '/tmp/tmp.png'
-    try:
-        images = []
+def run_model(dicom_files, args, payload=None):
+    if payload is None:
+        payload = {
+            'dcmtk': True
+        }
+    elif 'dcmtk' not in payload:
+        payload['dcmtk'] = True
 
-        for dicom in dicoms:
+    images = []
+
+    if payload['dcmtk']:
+        logger.info('Using dcmtk')
+    else:
+        logger.info('Using pydicom')
+
+    for dicom in dicom_files:
+        try:
+            dicom_path = tempfile.NamedTemporaryFile(suffix='.dcm').name
+            image_path = tempfile.NamedTemporaryFile(suffix='.png').name
+            view, side = get_dicom_info(pydicom.dcmread(dicom))
+            dicom.seek(0)
             dicom.save(dicom_path)
 
-            import pydicom
-            view, side = get_info(pydicom.dcmread(dicom_path))
-            # image = dicom_to_arr(dicom)
+            if payload['dcmtk']:
+                image = dicom_to_image_dcmtk(dicom_path, image_path)
+                logger.debug('Image mode: {}'.format(image.mode))
+                images.append({'x': image, 'side_seq': side, 'view_seq': view})
+            else:
+                dicom = pydicom.dcmread(dicom_path)
+                image = dicom_to_arr(dicom, pillow=True)
+                images.append({'x': image, 'side_seq': side, 'view_seq': view})
 
-            from subprocess import Popen
-            Popen(['dcmj2pnm', '-O', '+on2', '--use-voi-lut', '1', dicom_path, image_path]).wait()
+        except Exception as e:
+            logger.warning(e)
 
-            images.append({'x': Image.open(image_path), 'side_seq': side, 'view_seq': view})
-            # images.append({'x': Image.fromarray(image, mode='I'), 'side_seq': side, 'view_seq': view})
+    risk_factor_vector = None
 
-        if args.use_risk_factors and not args.use_pred_risk_factors_at_test:
-            assert 'mrn' in metadata
-            assert 'accession' in metadata
-            logger.info('Get risks')
-            risk_factor_vector = oncoqueries.get_risk_factors(args,
-                                                              metadata['mrn'],
-                                                              metadata['accession'],
-                                                              args.temp_img_dir,
-                                                              logger)
-        else:
-            risk_factor_vector = None
+    y = onconet.process_exam(images, risk_factor_vector, args)
 
-        y = onconet.process_exam(images, risk_factor_vector, args)
-
-        report = {'predictions': y}
-    except ValueError as e:
-        logger.warning(e)
+    report = {'predictions': y}
 
     return report
