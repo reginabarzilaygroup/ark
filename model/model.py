@@ -21,7 +21,10 @@ def get_dicom_info(dicom):
     if side_str not in valid_side:
         raise ValueError("Invalid Image Laterality `{}`: must be in {}".format(side_str, valid_side))
 
-    return valid_view.index(view_str), valid_side.index(side_str)
+    view = 0 if view_str == 'CC' else 1
+    side = 0 if side_str == 'R' else 1
+
+    return view, side
 
 
 def run_model(dicom_files, args, payload=None):
@@ -55,7 +58,6 @@ def run_model(dicom_files, args, payload=None):
                 dicom = pydicom.dcmread(dicom_path)
                 image = dicom_to_arr(dicom, pillow=True)
                 images.append({'x': image, 'side_seq': side, 'view_seq': view})
-
         except Exception as e:
             logger.warning(e)
 
