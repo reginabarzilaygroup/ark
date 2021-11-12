@@ -28,5 +28,5 @@ def validate_post_request(req, required=None, max_size=8 * 10**8):
     else:
         raise RuntimeError("'data' not in request JSON")
 
-    if 'files' not in req.files:
-        raise RuntimeError("Request does not contain `files` array")
+    if 'dicom' not in req.files:
+        raise RuntimeError("Request does not contain `dicom` array")

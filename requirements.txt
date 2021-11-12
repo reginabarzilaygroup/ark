@@ -1,6 +1,6 @@
 click==8.0.1
 coverage==6.0
-dataclasses==0.8
+dataclasses
 Flask==2.0.2
 importlib-metadata==4.8.1
 itsdangerous==2.0.1
@@ -15,7 +15,7 @@ Werkzeug==2.0.1
 wheel==0.37.0
 zipp==3.6.0
 
-torch==1.4.0
+torch==1.9.0
 torchvision==0.2.0
 scikit-learn==0.23.1
 scipy

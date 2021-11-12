@@ -1,11 +1,11 @@
 name: ark
 dependencies:
-  - python=3.6
-  - coverage<6.0
-  - coverage-badge
-  - flask
+  - python=3.8
   - pip
-  - pytorch
-  - torchvision
   - pip:
-      - pydicom>=2.2.2
+      - coverage<6.0
+      - coverage-badge
+      - flask
+      - pydicom
+      - torch
+      - torchvision

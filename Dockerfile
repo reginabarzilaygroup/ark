@@ -1,18 +1,18 @@
-FROM python:3.6-slim
-
-ENV NAME ark
+FROM python:3.8-slim
 
 WORKDIR /app
 
-COPY requirements.txt requirements.txt
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    dcmtk \
+&& rm -rf /var/lib/apt/lists/*
 
-RUN pip install -r requirements.txt
-
-RUN apt-get update -y
-RUN apt-get install -y dcmtk
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
+ENV NAME ark
+
 EXPOSE 5000
 
-CMD ["python", "main.py"]
+ENTRYPOINT ["python", "main.py"]

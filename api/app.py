@@ -1,4 +1,5 @@
 import json
+import time
 import logging
 
 from flask import Flask
@@ -18,11 +19,13 @@ def build_app(config=None):
     else:
         app.config.from_object(MammoCancerMirai())
 
-    @app.route('/serve', methods=['POST'])
+    @app.route('/serve', methods=['POST'])  # TODO: Legacy endpoint, remove on 1.0
+    @app.route('/dicom/files', methods=['POST'])
     def dicom():
-        """Legacy '/serve' endpoint, replicates same behavior as /dicom.
-        # TODO: Remove on 1.0
+        """Endpoint to upload physical files
         """
+        start = time.time()
+
         app.logger.info("Request received at /serve")
         response = {'data': None, 'message': None, 'statusCode': 200}
 
@@ -31,7 +34,8 @@ def build_app(config=None):
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
             payload = json.loads(request.form['data'])
 
-            dicom_files = request.files.getlist("files")
+            dicom_files = request.files.getlist("dicom")
+            # TODO: Must receive four files
             app.logger.debug("Received {} files".format(len(dicom_files)))
 
             response["data"] = run_model(dicom_files, app.config['ONCONET_ARGS'], payload=payload)
@@ -39,6 +43,8 @@ def build_app(config=None):
             app.logger.error(e)
             response['message'] = str(e)
             response['statusCode'] = 400
+
+        response['runtime'] = time.time() - start
 
         return response, response['statusCode']
 
