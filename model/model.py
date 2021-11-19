@@ -10,6 +10,16 @@ logger = logging.getLogger('ark')
 
 
 def get_dicom_info(dicom):
+    """Return tags for View Position and Image Laterality.
+    # TODO: This may be Mirai specific, move as needed.
+
+    Args:
+        dicom (pydicom.Dataset): Dataset object containing DICOM tags
+
+    Returns:
+        int: binary integer 0 or 1 corresponding to the type of View Position
+        int: binary integer 0 or 1 corresponding to the type of Image Laterality
+    """
     view_str = dicom.ViewPosition
     side_str = dicom.ImageLaterality
 

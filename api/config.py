@@ -4,15 +4,10 @@ class Args(object):
 
 
 class Config(object):
-    DEBUG=False
-    AGGREGATION="none"
+    DEBUG = False
+    AGGREGATION = "none"
     ONCONET_CONFIG = {}
-    ONCODATA_CONFIG = {
-        'convertor': 'dcmtk',
-        'temp_img_dir': '/home/yala/OncoServe/tmp_images'
-    }
     ONCONET_ARGS = Args(ONCONET_CONFIG)
-    ONCODATA_ARGS = Args(ONCODATA_CONFIG)
     ONCOSERVE_VERSION = '0.2.0'
     ONCODATA_VERSION = '0.2.0'
     ONCONET_VERSION =  '0.2.0'
@@ -37,13 +32,13 @@ class MammoCancerMirai(Config):
         'additional': None,
         'img_encoder_snapshot': 'model/snapshots/mgh_mammo_MIRAI_Base_May20_2019.p',
         'transformer_snapshot': 'model/snapshots/mgh_mammo_cancer_MIRAI_Transformer_Jan13_2020.p',
-        'video':False,
+        'video': False,
         "pred_risk_factors": True,
         'use_pred_risk_factors_at_test': True,
         'pred_both_sides': False,
         'multi_image': True,
         'num_images': 4,
-        'wrap_model':False,
+        'wrap_model': False,
         'state_dict_path': None,
         'snapshot': None,
         'min_num_images': 4,

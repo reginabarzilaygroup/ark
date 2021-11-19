@@ -105,7 +105,7 @@ def dicom_to_image_dcmtk(dicom_path, image_path):
     return Image.open(image_path)
 
 
-def dicom_to_arr(dicom, auto=True, index=0, pillow=False):
+def dicom_to_arr(dicom, auto=True, index=0, pillow=False, overlay=False):
     image = apply_modality_lut(dicom.pixel_array, dicom)
 
     if (0x0028, 0x1056) in dicom:
@@ -136,23 +136,24 @@ def dicom_to_arr(dicom, auto=True, index=0, pillow=False):
 
     image = image.astype(np.uint16)
 
-    arr = dicom.overlay_array(0x6000)
-    old_shape = arr.shape
-    arr = arr.flatten()
+    if overlay:
+        arr = dicom.overlay_array(0x6000)
+        old_shape = arr.shape
+        arr = arr.flatten()
 
-    arr = np.append(arr, np.array([0] * 4))
-    arr = arr.reshape((len(arr) // 16, 16))
+        arr = np.append(arr, np.array([0] * 4))
+        arr = arr.reshape((len(arr) // 16, 16))
 
-    for i in range(arr.shape[0]):
-        if 1 not in arr[i]:
-            continue
-        arr[i] = np.roll(arr[i], 8)
+        for i in range(arr.shape[0]):
+            if 1 not in arr[i]:
+                continue
+            arr[i] = np.roll(arr[i], 8)
 
-    arr = arr.flatten()
+        arr = arr.flatten()
 
-    arr = arr[:-4].reshape(old_shape)
-    num_bits = dicom[0x0028, 0x3010].value[index][0x0028, 0x3002].value[2]
-    image[arr == 1] = 2 ** 16 - 1
+        arr = arr[:-4].reshape(old_shape)
+        num_bits = dicom[0x0028, 0x3010].value[index][0x0028, 0x3002].value[2]
+        image[arr == 1] = 2 ** 16 - 1
 
     if pillow:
         return Image.fromarray(image.astype(np.int32), mode='I')

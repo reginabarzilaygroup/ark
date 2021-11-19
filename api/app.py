@@ -1,6 +1,6 @@
 import json
-import time
 import logging
+import time
 
 from flask import Flask
 from flask import request
