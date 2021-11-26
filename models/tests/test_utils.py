@@ -5,7 +5,7 @@ import unittest
 import pydicom
 from pydicom.data import get_testdata_files
 
-from model.utils import read_dicoms
+from models.utils import read_dicoms
 
 
 class ModelUtilsTestCase(unittest.TestCase):

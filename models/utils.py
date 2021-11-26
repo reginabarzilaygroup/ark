@@ -159,3 +159,31 @@ def dicom_to_arr(dicom, auto=True, index=0, pillow=False, overlay=False):
         return Image.fromarray(image.astype(np.int32), mode='I')
     else:
         return image
+
+
+def get_dicom_info(dicom):
+    """Return tags for View Position and Image Laterality.
+    # TODO: This may be Mirai specific, move as needed.
+
+    Args:
+        dicom (pydicom.Dataset): Dataset object containing DICOM tags
+
+    Returns:
+        int: binary integer 0 or 1 corresponding to the type of View Position
+        int: binary integer 0 or 1 corresponding to the type of Image Laterality
+    """
+    view_str = dicom.ViewPosition
+    side_str = dicom.ImageLaterality
+
+    valid_view = ['CC', 'MLO']
+    valid_side = ['R', 'L']
+
+    if view_str not in valid_view:
+        raise ValueError("Invalid View Position `{}`: must be in {}".format(view_str, valid_view))
+    if side_str not in valid_side:
+        raise ValueError("Invalid Image Laterality `{}`: must be in {}".format(side_str, valid_side))
+
+    view = 0 if view_str == 'CC' else 1
+    side = 0 if side_str == 'R' else 1
+
+    return view, side

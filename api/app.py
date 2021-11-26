@@ -7,7 +7,7 @@ from flask import request
 
 from api.utils import validate_post_request
 from api.config import MammoCancerMirai
-from model.model import run_model
+from models import MiraiModel
 
 
 def build_app(config=None):
@@ -38,7 +38,8 @@ def build_app(config=None):
             # TODO: Must receive four files
             app.logger.debug("Received {} files".format(len(dicom_files)))
 
-            response["data"] = run_model(dicom_files, app.config['ONCONET_ARGS'], payload=payload)
+            model = MiraiModel(app.config['ONCONET_ARGS'])
+            response["data"] = model.run_model(dicom_files, payload=payload)
         except Exception as e:
             app.logger.error(e)
             response['message'] = str(e)
