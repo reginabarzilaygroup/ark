@@ -30,7 +30,9 @@ def build_app(config=None):
         response = {'data': None, 'message': None, 'statusCode': 200}
 
         try:
-            validate_post_request(request, required=['mrn', 'accession'])
+            model = MiraiModel(app.config['ONCONET_ARGS'])
+            validate_post_request(request, required=model.required_data)
+
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
             payload = json.loads(request.form['data'])
 
@@ -38,7 +40,6 @@ def build_app(config=None):
             # TODO: Must receive four files
             app.logger.debug("Received {} files".format(len(dicom_files)))
 
-            model = MiraiModel(app.config['ONCONET_ARGS'])
             response["data"] = model.run_model(dicom_files, payload=payload)
         except Exception as e:
             app.logger.error(e)

@@ -16,7 +16,7 @@ class APIAppTestCase(unittest.TestCase):
     def test_files_upload(self):
         files = [open(fp, 'rb') for fp in self.fps]
 
-        rv = self.client.post('/serve', data={'files': files, 'data': json.dumps(self.data)})
+        rv = self.client.post('/serve', data={'dicom': files, 'data': json.dumps(self.data)})
 
         for f in files:
             f.close()
@@ -27,4 +27,4 @@ class APIAppTestCase(unittest.TestCase):
         rv = self.client.post('/serve', data={'data': json.dumps(self.data)})
 
         self.assertEqual(rv.status_code, 400)
-        self.assertEqual(rv.json['message'], "Request does not contain `files` array")
+        self.assertEqual(rv.json['message'], "Request does not contain `dicom` array")

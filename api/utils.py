@@ -9,24 +9,22 @@ def validate_post_request(req, required=None, max_size=8 * 10**8):
     Returns:
         None
     """
-    if required is None:
-        required = []
-
     if req.form and req.content_length > max_size:
         raise RuntimeError("Request data too large: {} > {}".format(req.content_length, max_size))
 
-    if 'data' in req.form:
-        data = req.form['data']
-        invalid = []
+    if required is not None:
+        if 'data' in req.form:
+            data = req.form['data']
+            invalid = []
 
-        for item in required:
-            if item not in data:
-                invalid.append(item)
+            for item in required:
+                if item not in data:
+                    invalid.append(item)
 
-        if invalid:
-            raise RuntimeError("Missing keys in request JSON: {}".format(invalid))
-    else:
-        raise RuntimeError("'data' not in request JSON")
+            if invalid:
+                raise RuntimeError("Missing keys in request JSON: {}".format(invalid))
+        else:
+            raise RuntimeError("'data' not in request JSON; {}".format(req.form.keys()))
 
     if 'dicom' not in req.files:
         raise RuntimeError("Request does not contain `dicom` array")

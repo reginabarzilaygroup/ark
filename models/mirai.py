@@ -20,6 +20,10 @@ logger = logging.getLogger('ark')
 
 
 class MiraiModel(BaseModel):
+    def __init__(self, args):
+        super().__init__(args)
+        self.required_data = None
+
     def load_model(self):
         logger.info("Loading model...")
         self.args.cuda = self.args.cuda and torch.cuda.is_available()
