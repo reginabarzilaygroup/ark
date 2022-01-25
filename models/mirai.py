@@ -131,13 +131,33 @@ class MiraiModel(BaseModel):
         else:
             logger.info('Using pydicom')
 
+        dicom_info = {}
+
         for dicom in dicom_files:
+            try:
+                view, side = get_dicom_info(pydicom.dcmread(dicom))
+
+                if (view, side) in dicom_info:
+                    prev_dicom = dicom_info[(view, side)]
+                    prev = int(prev_dicom[0x0008, 0x0023].value + prev_dicom[0x0008, 0x0033].value)
+                    cur = int(dicom[0x0008, 0x0023].value + dicom[0x0008, 0x0033].value)
+
+                    if cur > prev:
+                        dicom_info[(view, side)] = dicom
+                else:
+                    dicom_info[(view, side)] = dicom
+            except Exception as e:
+                logger.warning("{}: {}".format(type(e).__name__, e))
+
+        for k in dicom_info:
             try:
                 dicom_path = tempfile.NamedTemporaryFile(suffix='.dcm').name
                 image_path = tempfile.NamedTemporaryFile(suffix='.png').name
-                view, side = get_dicom_info(pydicom.dcmread(dicom))
+
+                dicom = dicom_info[k]
                 dicom.seek(0)
                 dicom.save(dicom_path)
+                view, side = k
 
                 if payload['dcmtk']:
                     image = dicom_to_image_dcmtk(dicom_path, image_path)
@@ -148,7 +168,7 @@ class MiraiModel(BaseModel):
                     image = dicom_to_arr(dicom, pillow=True)
                     images.append({'x': image, 'side_seq': side, 'view_seq': view})
             except Exception as e:
-                logger.warning(e)
+                logger.warning("{}: {}".format(type(e).__name__, e))
 
         risk_factor_vector = None
 
