@@ -64,7 +64,7 @@ def build_app(config=None):
             model = MiraiModel(app.config['ONCONET_ARGS'])
 
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
-            payload = json.loads(request.form['data'])
+            payload = request.get_json()
             app.logger.debug(payload)
 
             download_zip(payload['uri'])
