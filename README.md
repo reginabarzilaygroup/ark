@@ -1,6 +1,10 @@
 # ark
 [![coverage](coverage.svg)](https://pypi.org/project/coverage-badge/) (out-of-date)
 
+To run the docker image:
+
+    docker run -p 5000:5000 ark/mirai
+
 ### `POST` /dicom/uri
 
 Accepts a POST request of JSON content containing a direct link to a `.zip` file.
@@ -11,7 +15,7 @@ Valid JSON:
 
 Example CURL usage:
 
-    curl -X POST -H 'Content-Type: application/json' -d '{'uri': 'https://directlink.com/file'}' http://localhost:8080/dicom/uri
+    curl -X POST -H 'Content-Type: application/json' -d '{'uri': 'https://directlink.com/file'}' http://localhost:5000/dicom/uri
 
 The structure of the `.zip` file must be similar to as follows:
 

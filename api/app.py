@@ -63,9 +63,8 @@ def build_app(config=None):
         try:
             model = MiraiModel(app.config['ONCONET_ARGS'])
 
-            app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
             payload = request.get_json()
-            app.logger.debug(payload)
+            app.logger.debug("Received JSON payload: {}".format(payload))
 
             download_zip(payload['uri'])
             dicom_files = dicom_dir_walk()

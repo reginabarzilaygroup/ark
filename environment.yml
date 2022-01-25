@@ -12,6 +12,7 @@ dependencies:
   - flask==2.0.2
   - pillow==8.3.1
   - pydicom==2.2.2
+  - requests==2.27.1
   - tqdm==4.62.3
   # Model
   - lifelines==0.24.15
