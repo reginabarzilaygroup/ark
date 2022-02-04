@@ -19,10 +19,15 @@ from onconet.utils import parsing
 logger = logging.getLogger('ark')
 
 
+class Args(object):
+    def __init__(self, config_dict):
+        self.__dict__.update(config_dict)
+
+
 class MiraiModel(BaseModel):
     def __init__(self, args):
-        super().__init__(args)
-        self.required_data = None
+        super().__init__()
+        self.args = Args(args)
 
     def load_model(self):
         logger.info("Loading model...")

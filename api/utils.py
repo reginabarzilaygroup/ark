@@ -38,7 +38,7 @@ def validate_post_request(req, required=None, max_size=8 * 10**8):
         raise RuntimeError("Request does not contain `dicom` array")
 
 
-def download_zip(uri, path='/tmp'):
+def download_zip(uri, path='/tmp', local_file=False):
     zip_path = path + '/dicom.zip'
     dir_path = path + '/dicom'
     results = requests.get(uri)

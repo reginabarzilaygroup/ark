@@ -5,19 +5,23 @@ import time
 from flask import Flask
 from flask import request
 
+import models
 from api.utils import dicom_dir_walk, download_zip, validate_post_request
-from api.config import MammoCancerMirai
-from models import MiraiModel
 
 
-def build_app(config=None):
+def set_model(app):
+    model_name = app.config['MODEL_NAME']
+    model_args = app.config['ONCONET_ARGS']
+
+    app.config['MODEL'] = models.model_dict[model_name](model_args)
+
+
+def build_app(config):
     app = Flask('ark')
+    app.config.from_mapping(config)
     logging.getLogger('ark').setLevel(logging.DEBUG)
 
-    if config is not None:
-        app.config.from_mapping(config)
-    else:
-        app.config.from_object(MammoCancerMirai())
+    set_model(app)
 
     @app.route('/serve', methods=['POST'])  # TODO: Legacy endpoint, remove on 1.0
     @app.route('/dicom/files', methods=['POST'])
@@ -28,9 +32,9 @@ def build_app(config=None):
 
         app.logger.info("Request received at /dicom/files")
         response = {'data': None, 'message': None, 'statusCode': 200}
+        model = app.config['MODEL']
 
         try:
-            model = MiraiModel(app.config['ONCONET_ARGS'])
             validate_post_request(request, required=model.required_data)
 
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
@@ -47,7 +51,7 @@ def build_app(config=None):
             response['message'] = msg
             response['statusCode'] = 400
 
-        response['runtime'] = time.time() - start
+        response['runtime'] = "{:.2f}s".format(time.time() - start)
 
         return response, response['statusCode']
 
@@ -59,10 +63,9 @@ def build_app(config=None):
 
         app.logger.info("Request received at /dicom/uri")
         response = {'data': None, 'message': None, 'statusCode': 200}
+        model = app.config['MODEL']
 
         try:
-            model = MiraiModel(app.config['ONCONET_ARGS'])
-
             payload = request.get_json()
             app.logger.debug("Received JSON payload: {}".format(payload))
 
@@ -76,7 +79,7 @@ def build_app(config=None):
             response['message'] = msg
             response['statusCode'] = 400
 
-        response['runtime'] = time.time() - start
+        response['runtime'] = "{:.2f}s".format(time.time() - start)
 
         return response, response['statusCode']
 
