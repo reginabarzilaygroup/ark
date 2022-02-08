@@ -1,4 +1,5 @@
-.*
+**/.*
 **/data/
 **/tests/
+__pycache__
 environment.yml

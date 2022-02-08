@@ -3,7 +3,7 @@
 
 To run the docker image:
 
-    docker run -p 5000:5000 ark/mirai
+    docker run -p 5000:5000 ark/mirai:0.1.0
 
 ### `POST` /dicom/uri
 

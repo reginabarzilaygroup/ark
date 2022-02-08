@@ -12,6 +12,7 @@ import torch.nn.functional as F
 import onconet.transformers.factory as transformer_factory
 from models.base import BaseModel
 from models.utils import dicom_to_image_dcmtk, dicom_to_arr, get_dicom_info
+from onconet import __version__ as onconet_version
 from onconet.models.factory import get_model
 from onconet.transformers.basic import ComposeTrans
 from onconet.utils import parsing
@@ -28,6 +29,7 @@ class MiraiModel(BaseModel):
     def __init__(self, args):
         super().__init__()
         self.args = Args(args)
+        self.__version__ = onconet_version
 
     def load_model(self):
         logger.info("Loading model...")
