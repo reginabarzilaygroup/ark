@@ -3,6 +3,7 @@ import requests
 import zipfile
 
 import pydicom
+from requests_file import FileAdapter
 from werkzeug.datastructures import FileStorage
 
 
@@ -38,10 +39,14 @@ def validate_post_request(req, required=None, max_size=8 * 10**8):
         raise RuntimeError("Request does not contain `dicom` array")
 
 
-def download_zip(uri, path='/tmp', local_file=False):
-    zip_path = path + '/dicom.zip'
-    dir_path = path + '/dicom'
-    results = requests.get(uri)
+def download_zip(uri, path='/tmp/', local_file=False):
+    zip_path = path + 'dicom.zip'
+    dir_path = path + 'dicom/'
+
+    # TODO: deactivate for prod
+    s = requests.Session()
+    s.mount('file://', FileAdapter())
+    results = s.get(uri)
 
     with open(zip_path, 'wb') as f:
         f.write(results.content)
