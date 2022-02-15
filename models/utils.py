@@ -88,8 +88,8 @@ def dicom_to_image_dcmtk(dicom_path, image_path):
         dicom_path(str): The path to the dicom file.
         image_path(str): The path where the image will be saved.
     """
-    default_window_level = 540
-    default_window_width = 580
+    default_window_level = "540"
+    default_window_width = "580"
 
     dcm_file = pydicom.dcmread(dicom_path)
     manufacturer = dcm_file.Manufacturer
