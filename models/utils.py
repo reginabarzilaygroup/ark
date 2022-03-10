@@ -93,13 +93,21 @@ def dicom_to_image_dcmtk(dicom_path, image_path):
 
     dcm_file = pydicom.dcmread(dicom_path)
     manufacturer = dcm_file.Manufacturer
-    series = dcm_file.SeriesDescription
+    voi_lut_exists = (0x0028, 0x3010) in dcm_file and len(dcm_file[(0x0028, 0x3010)].value) > 0
 
-    if 'GE' in manufacturer:
+    # SeriesDescription is not a required attribute, see
+    #   https://dicom.nema.org/medical/dicom/current/output/chtml/part03/sect_C.7.3.html#table_C.7-5a
+    if hasattr(dcm_file, 'SeriesDescription'):
+        ser_desc = dcm_file.SeriesDescription
+    else:
+        ser_desc = ''
+
+    if 'GE' in manufacturer and voi_lut_exists:
         Popen(['dcmj2pnm', '+on2', '--use-voi-lut', '1', dicom_path, image_path]).wait()
-    elif 'C-View' in series:
+    elif 'C-View' in ser_desc and voi_lut_exists:
         Popen(['dcmj2pnm', '+on2', '+Ww', default_window_level, default_window_width, dicom_path, image_path]).wait()
     else:
+        logger.warning("Manufacturer not GE or C-View/VOI LUT doesn't exist, defaulting to min-max window algorithm")
         Popen(['dcmj2pnm', '+on2', '--min-max-window', dicom_path, image_path]).wait()
 
     return Image.open(image_path)
@@ -172,6 +180,11 @@ def get_dicom_info(dicom):
         int: binary integer 0 or 1 corresponding to the type of View Position
         int: binary integer 0 or 1 corresponding to the type of Image Laterality
     """
+    if not hasattr(dicom, 'ViewPosition'):
+        raise AttributeError('ViewPosition does not exist in DICOM metadata')
+    if not hasattr(dicom, 'ImageLaterality'):
+        raise AttributeError('ImageLaterality does not exist in DICOM metadata')
+
     view_str = dicom.ViewPosition
     side_str = dicom.ImageLaterality
 
