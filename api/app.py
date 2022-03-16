@@ -5,16 +5,19 @@ import time
 from flask import Flask
 from flask import request
 
-import models
 from api import __version__ as api_version
 from api.utils import dicom_dir_walk, download_zip, validate_post_request
+from models import model_dict
 
 
 def set_model(app):
     model_name = app.config['MODEL_NAME']
-    model_args = app.config['ONCONET_ARGS']
+    model_args = app.config['MODEL_ARGS']
 
-    app.config['MODEL'] = models.model_dict[model_name](model_args)
+    if model_name in model_dict:
+        app.config['MODEL'] = model_dict[model_name](model_args)
+    else:
+        raise KeyError("Model '{}' not found in model dictionary".format(model_name))
 
 
 def set_routes(app):
@@ -26,7 +29,7 @@ def set_routes(app):
         start = time.time()
 
         app.logger.info("Request received at /dicom/files")
-        response = {'data': None, 'message': None, 'statusCode': 200}
+        response = {'data': None, 'metadata': None, 'message': None, 'statusCode': 200}
         model = app.config['MODEL']
 
         try:
@@ -34,10 +37,11 @@ def set_routes(app):
 
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
             payload = json.loads(request.form['data'])
+            if 'metadata' in payload:
+                response['metadata'] = payload['metadata']
 
             dicom_files = request.files.getlist("dicom")
-            # TODO: Must receive four files
-            app.logger.debug("Received {} files".format(len(dicom_files)))
+            app.logger.debug("Received {} valid files".format(len(dicom_files)))
 
             response["data"] = model.run_model(dicom_files, payload=payload)
         except Exception as e:

@@ -16,7 +16,7 @@ def main(port, config_path):
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('-p', default=5000)
-    parser.add_argument('--config', default="api/configs/mirai.json")
+    parser.add_argument('--config', default="api/configs/empty.json")
 
     args = parser.parse_args()
 

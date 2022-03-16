@@ -1,3 +1,6 @@
+from version import __version__ as ark_version
+
+
 class BaseModel:
     def __init__(self):
         self.__version__ = None
@@ -8,9 +11,9 @@ class BaseModel:
 
 
 class EmptyModel(BaseModel):
-    def __init__(self):
+    def __init__(self, args):
         super().__init__()
-        self.__version__ = "0.0.0"
+        self.__version__ = ark_version
 
     def run_model(self, dicom_file, payload=None):
         return

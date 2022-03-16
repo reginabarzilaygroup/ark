@@ -88,6 +88,7 @@ class MiraiModel(BaseModel):
 
         if callibrator is not None:
             logger.debug("Raw probs: {}".format(probs))
+
             for i in callibrator.keys():
                 pred_y[i] = callibrator[i].predict_proba(probs[0, i].reshape(-1, 1))[0, 1]
 
@@ -160,6 +161,8 @@ class MiraiModel(BaseModel):
             try:
                 dicom_path = tempfile.NamedTemporaryFile(suffix='.dcm').name
                 image_path = tempfile.NamedTemporaryFile(suffix='.png').name
+                logger.debug("Temp DICOM path: {}".format(dicom_path))
+                logger.debug("Temp image path: {}".format(image_path))
 
                 dicom = dicom_info[k]
                 dicom.seek(0)
@@ -180,7 +183,9 @@ class MiraiModel(BaseModel):
         risk_factor_vector = None
 
         y = self.process_exam(images, risk_factor_vector)
+        logging.debug('Raw Predictions: ', y)
 
+        y = {'Year {}'.format(i+1): round(p, 4) for i, p in enumerate(y)}
         report = {'predictions': y}
 
         return report

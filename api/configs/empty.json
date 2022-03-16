@@ -1,4 +1,5 @@
 {
   "MODEL_NAME": "empty",
+  "MODEL_ARGS": {},
   "ENV": "prod"
 }
