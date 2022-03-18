@@ -7,10 +7,10 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt .
-RUN pip wheel --no-cache-dir --wheel-dir /wheels/ -r requirements.txt git+git://github.com/harrivle/Mirai.git@v0.4.1
+RUN pip wheel --no-cache-dir --wheel-dir /wheels/ -r requirements.txt git+https://github.com/harrivle/Mirai.git@v0.4.1
 
 RUN wget --load-cookies /tmp/cookies.txt \
-    "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://drive.google.com/uc?export=download&id=1OLCjciwoZ51cpVmE_Dw6ULhWYYf577lm' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1OLCjciwoZ51cpVmE_Dw6ULhWYYf577lm" \
+    "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://drive.google.com/uc?export=download&id=1O2IL_SlZhCtvTyiBG8CKFcuZsIvp4Qng' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1O2IL_SlZhCtvTyiBG8CKFcuZsIvp4Qng" \
     -O /tmp/snapshots.zip \
 && unzip -d /snapshots/ /tmp/snapshots.zip
 
@@ -33,4 +33,4 @@ ENV NAME ark
 
 EXPOSE 5000
 
-ENTRYPOINT ["python", "main.py"]
+ENTRYPOINT ["python", "main.py", "--config", "api/configs/mirai.json"]

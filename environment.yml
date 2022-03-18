@@ -11,7 +11,14 @@ dependencies:
   - coverage-badge==1.1.0
   - flask==2.0.2
   - Pillow==9.0.0
-  - pydicom==2.2.2
+  - pydicom==2.3.0
   - requests==2.27.1
   - requests-file==1.5.1
   - tqdm==4.62.3
+  # Model
+  - lifelines==0.24.15
+  - scikit-image==0.18.2
+  - scikit-learn==0.23.2
+  - torchvision==0.10.0
+  - pip:
+      - torch==1.9.0
