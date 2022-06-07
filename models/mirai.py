@@ -10,7 +10,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import onconet.transformers.factory as transformer_factory
-from models.base import BaseModel
+from models.base import BaseModel, ArgsDict
 from models.utils import dicom_to_image_dcmtk, dicom_to_arr, get_dicom_info
 from onconet import __version__ as onconet_version
 from onconet.models.factory import get_model
@@ -20,15 +20,10 @@ from onconet.utils import parsing
 logger = logging.getLogger('ark')
 
 
-class Args(object):
-    def __init__(self, config_dict):
-        self.__dict__.update(config_dict)
-
-
 class MiraiModel(BaseModel):
     def __init__(self, args):
         super().__init__()
-        self.args = Args(args)
+        self.args = ArgsDict(args)
         self.__version__ = onconet_version
 
     def load_model(self):

@@ -1,0 +1,24 @@
+{
+  "MODEL_NAME": "density",
+  "ENV": "prod",
+  "AGGREGATION": "vote",
+  "MODEL_ARGS": {
+    "cuda": false,
+    "img_mean": [7662.53827604],
+    "img_std": [12604.0682836],
+    "img_size": [256,256],
+    "num_chan": 3,
+    "num_gpus": 1,
+    "test_image_transformers": ["scale_2d"],
+    "test_tensor_transformers": ["force_num_chan_2d", "normalize_2d"],
+    "additional": null,
+    "snapshot": "models/snapshots/mgh_mammo_density_sep26_2018.pt",
+    "model_name": "mirai_density",
+    "video": false,
+    "use_precomputed_hiddens": false,
+    "use_risk_factors": false,
+    "callibrator_path": null,
+    "survival_analysis_setup": false,
+    "pred_risk_factors": false
+  }
+}

@@ -17,3 +17,8 @@ class EmptyModel(BaseModel):
 
     def run_model(self, dicom_file, payload=None):
         return
+
+
+class ArgsDict(object):
+    def __init__(self, config_dict):
+        self.__dict__.update(config_dict)

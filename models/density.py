@@ -9,7 +9,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 import onconet.transformers.factory as transformer_factory
-from models.base import BaseModel
+from models.base import BaseModel, ArgsDict
 from models.utils import dicom_to_image_dcmtk, dicom_to_arr
 from onconet.transformers.basic import ComposeTrans
 from onconet.utils import parsing
@@ -19,7 +19,8 @@ logger = logging.getLogger('ark')
 
 class DensityModel(BaseModel):
     def __init__(self, args):
-        super().__init__(args)
+        super().__init__()
+        self.args = ArgsDict(args)
         self.required_data = None
 
     def load_model(self):
@@ -46,6 +47,11 @@ class DensityModel(BaseModel):
             pass
 
         return model
+
+    def label_map(self, pred):
+        pred = pred.argmax()
+        density_labels = [1, 2, 3, 4]
+        return density_labels[pred]
 
     def process_image(self, image, model, risk_factor_vector=None):
         logger.info("Processing image...")
@@ -75,7 +81,7 @@ class DensityModel(BaseModel):
 
         ## Index 0 to toss batch dimension
         pred_y = F.softmax(model(x, risk_factors)[0])[0]
-        pred_y = np.array(self.args.label_map(pred_y.cpu().data.numpy()))
+        pred_y = np.array(self.label_map(pred_y.cpu().data.numpy()))
 
         logger.info("Pred: {}".format(pred_y))
 
