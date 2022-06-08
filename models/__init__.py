@@ -15,7 +15,10 @@ model_dict = {
 
 if importlib.util.find_spec('onconet') is not None:
     from .mirai import MiraiModel
+    from .density import DensityModel
     model_dict['mirai'] = MiraiModel
+    model_dict['density'] = DensityModel
+
 
 
 __all__ = ['__version__', 'model_dict']
