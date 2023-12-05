@@ -19,6 +19,8 @@ if importlib.util.find_spec('onconet') is not None:
     model_dict['mirai'] = MiraiModel
     model_dict['density'] = DensityModel
 
-
+if importlib.util.find_spec('sybil') is not None:
+    from .sybil import SybilModel
+    model_dict['sybil'] = SybilModel
 
 __all__ = ['__version__', 'model_dict']

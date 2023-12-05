@@ -36,7 +36,7 @@ def set_routes(app):
             validate_post_request(request, required=model.required_data)
 
             app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
-            payload = json.loads(request.form['data'])
+            payload = json.loads(request.form.get("data", "{}"))
             if 'metadata' in payload:
                 response['metadata'] = payload['metadata']
 
@@ -103,7 +103,7 @@ def set_routes(app):
             response['message'] = msg
             response['statusCode'] = 400
 
-        return response['statusCode']
+        return response, response['statusCode']
 
 
 def build_app(config):
