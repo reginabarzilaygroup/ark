@@ -26,10 +26,8 @@ RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.co
 # Copy server code
 COPY . .
 
-# Download trained model
-RUN wget --load-cookies /tmp/cookies.txt \
-    "https://drive.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://drive.google.com/uc?export=download&id=1O2IL_SlZhCtvTyiBG8CKFcuZsIvp4Qng' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1O2IL_SlZhCtvTyiBG8CKFcuZsIvp4Qng" \
-    -O /tmp/snapshots.zip \
+# Download trained model from Dropbox
+RUN wget 'https://www.dropbox.com/scl/fi/83otw7xpf1tgctowwjuer/snapshots.zip?rlkey=0jq0vr4cclmi283ou7dlavx0m&dl=1' -O /tmp/snapshots.zip \
 && mkdir -p models/snapshots && unzip -o -d models/snapshots/ /tmp/snapshots.zip
 
 ENV NAME ark
