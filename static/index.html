@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ark</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+
+<div id="mainContainer">
+
+    <div id="topRow">
+        <div class="textDisplay" id="infoBox">
+            <div id="infoResponse"></div>
+            <button id="loadInfoBtn">Load Info</button>
+        </div>
+
+        <form id="upload-form">
+            <div>Select DICOM files to submit for prediction
+            <br>
+                <small>Must be multiple .dcm files, not a zip file or folder.</small>
+            </div><br>
+            <input type="file" id="fileElem" multiple accept="*" onchange="updateFileList()">
+            <ul id="fileList"><li>No files selected!</li></ul>
+            <button type="submit">Submit Files</button>
+        </form>
+
+        <div class="textDisplay" id="predictionResponse">Model prediction response will appear here</div>
+    </div>
+
+    <hr> <!-- Horizontal line for separation -->
+
+    <div id="linksSection">
+        <h3>Links</h3>
+        <ul>
+            <li><a href="https://github.com/reginabarzilaygroup/ark/wiki">Ark (project behind this site)</a></li>
+            <li><a href="https://github.com/reginabarzilaygroup/Mirai/wiki">Mirai</a>
+                <ul>
+                    <li><a href="https://github.com/reginabarzilaygroup/Mirai/releases/latest/download/mirai_demo_data.zip">Example mammogram</a></li>
+                </ul>
+            </li>
+            <li><a href="https://github.com/reginabarzilaygroup/Sybil/wiki">Sybil</a>
+                <ul>
+                    <li><a href="https://www.dropbox.com/scl/fi/covbvo6f547kak4em3cjd/sybil_example.zip?rlkey=7a13nhlc9uwga9x7pmtk1cf1c&dl=1">Example LDCT scan</a></li>
+                </ul>
+            </li>
+            <li><a href="https://hub.docker.com/u/mitjclinic">MIT J-Clinic Docker Hub</a></li>
+            <li><a href="https://jclinic.mit.edu/">MIT Jameel Clinic Home</a></li>
+        </ul>
+    </div>
+
+    </div>
+
+<script src="/static/script.js"></script>
+</body>
+</html>

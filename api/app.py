@@ -4,8 +4,7 @@ import os
 import threading
 import time
 
-from flask import Flask, request
-import requests
+from flask import Flask, request, send_from_directory
 
 from api import __version__ as api_version
 from api.utils import dicom_dir_walk, download_zip, validate_post_request
@@ -24,6 +23,7 @@ def set_model(app):
 
 
 def set_routes(app):
+
     @app.route('/serve', methods=['POST'])  # TODO: Legacy endpoint, remove on 1.0
     @app.route('/dicom/files', methods=['POST'])
     def dicom():
@@ -110,9 +110,15 @@ def set_routes(app):
 
         return response, response['statusCode']
 
+    @app.route('/home', methods=['GET'])
+    @app.route('/index', methods=['GET'])
+    def home():
+        """Return homepage. Note that routing is order-specific, so we put this last."""
+        return send_from_directory(app.static_folder, 'index.html')
+
 
 def build_app(config):
-    app = Flask('ark')
+    app = Flask('ark', static_folder=os.environ.get('STATIC_FOLDER', "static"))
     app.config.from_mapping(config)
     logging.getLogger('ark').setLevel(logging.DEBUG)
 
