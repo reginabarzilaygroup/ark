@@ -27,7 +27,7 @@ RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.co
 COPY . .
 
 # Download trained model from Dropbox
-RUN wget 'https://www.dropbox.com/scl/fi/83otw7xpf1tgctowwjuer/snapshots.zip?rlkey=0jq0vr4cclmi283ou7dlavx0m&dl=1' -O /tmp/snapshots.zip \
+RUN wget 'https://github.com/reginabarzilaygroup/Mirai/releases/latest/download/snapshots.zip' -O /tmp/snapshots.zip \
 && mkdir -p models/snapshots && unzip -o -d models/snapshots/ /tmp/snapshots.zip
 
 ENV NAME ark
