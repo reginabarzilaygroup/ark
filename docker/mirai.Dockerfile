@@ -26,7 +26,7 @@ RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.co
 # Copy server code
 COPY . .
 
-# Download trained model from Dropbox
+# Download trained model weights
 RUN wget 'https://github.com/reginabarzilaygroup/Mirai/releases/latest/download/snapshots.zip' -O /tmp/snapshots.zip \
 && mkdir -p models/snapshots && unzip -o -d models/snapshots/ /tmp/snapshots.zip
 
