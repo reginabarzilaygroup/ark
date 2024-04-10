@@ -30,6 +30,9 @@ RUN python -c "from sybil import Sybil; model = Sybil('sybil_ensemble')"
 # Copy server code
 COPY . .
 
-EXPOSE 5000,8000
+EXPOSE 5000 8000
 
-ENTRYPOINT ["gunicorn", "-w 4", "main:create_app()", "-b 0.0.0.0:5000", "--env ARK_CONFIG=api/configs/sybil.json"]
+ENV ARK_CONFIG api/configs/sybil.json
+ENV LOG_LEVEL INFO
+ENTRYPOINT ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--timeout", "0", "main:create_app()"]
+
