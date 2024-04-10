@@ -27,11 +27,11 @@ RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.co
 COPY . .
 
 # Download trained model weights
-RUN wget 'https://github.com/reginabarzilaygroup/Mirai/releases/latest/download/snapshots.zip' -O /tmp/snapshots.zip \
+RUN wget 'https://github.com/reginabarzilaygroup/Mirai/releases/download/v0.6.0/snapshots.zip' -O /tmp/snapshots.zip \
 && mkdir -p models/snapshots && unzip -o -d models/snapshots/ /tmp/snapshots.zip
 
 ENV NAME ark
 
-EXPOSE 5000
+EXPOSE 5000, 8000
 
-ENTRYPOINT ["python", "main.py", "--config", "api/configs/mirai.json"]
+ENTRYPOINT ["gunicorn", "-w 4", "main:create_app()", "-b 0.0.0.0:5000", "--env ARK_CONFIG=api/configs/mirai.json"]
