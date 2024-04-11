@@ -34,5 +34,5 @@ EXPOSE 5000 8000
 
 ENV ARK_CONFIG api/configs/sybil.json
 ENV LOG_LEVEL INFO
-ENTRYPOINT ["gunicorn", "--workers", "4", "--bind", "0.0.0.0:5000", "--timeout", "0", "main:create_app()"]
+ENTRYPOINT ["gunicorn", "--bind", "0.0.0.0:5000", "--timeout", "0", "main:create_app()"]
 

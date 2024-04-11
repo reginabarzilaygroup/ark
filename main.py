@@ -30,11 +30,11 @@ Examples:
 # Run Flask server with Mirai config on port 5000
 ARK_CONFIG=api/configs/mirai.json ARK_FLASK_PORT=5000 python main.py
 
-# Run gunicorn server with Sybil config on port 5000, with 4 workers.
-gunicorn -w 4 -b 0.0.0.0:5000 "main:create_app()" --env ARK_CONFIG="api/configs/sybil.json"
+# Run gunicorn server with Sybil config on port 5000.
+gunicorn -b 0.0.0.0:5000 "main:create_app()" --env ARK_CONFIG="api/configs/sybil.json"
 
 # The same thing written slightly differently.
-ARK_CONFIG="api/configs/sybil.json" gunicorn -w 4 -b 0.0.0.0:5000 "main:create_app()"
+ARK_CONFIG="api/configs/sybil.json" gunicorn -b 0.0.0.0:5000 "main:create_app()"
 
 For more information, see:
 * README.md

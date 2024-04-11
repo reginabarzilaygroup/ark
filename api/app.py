@@ -2,6 +2,7 @@ import json
 import logging
 import os
 import threading
+import traceback
 import time
 
 from flask import Flask, request, send_from_directory
@@ -50,12 +51,15 @@ def set_routes(app):
 
             response["data"] = model.run_model(dicom_files, payload=payload)
         except Exception as e:
-            msg = "{}: {}".format(type(e).__name__, e)
-            app.logger.error(msg)
-            response['message'] = msg
+            short_msg = "{}: {}".format(type(e).__name__, e)
+            long_msg = traceback.format_exc(limit=10)
+            app.logger.error(long_msg)
+            response['message'] = short_msg
             response['statusCode'] = 400
 
+        runtime = "{:.2f}s".format(time.time() - start)
         response['runtime'] = "{:.2f}s".format(time.time() - start)
+        app.logger.debug("Request completed in {}".format(runtime))
 
         return response, response['statusCode']
 
@@ -81,7 +85,6 @@ def set_routes(app):
             response["data"] = model.run_model(dicom_files, payload=payload)
         except Exception as e:
             msg = "{}: {}".format(type(e).__name__, e)
-            # long_msg = traceback.format_exc()
             app.logger.error(msg)
             response['message'] = msg
             response['statusCode'] = 400
