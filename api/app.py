@@ -124,7 +124,7 @@ def set_routes(app):
 def build_app(config):
     app = Flask('ark', static_folder=os.environ.get('STATIC_FOLDER', "static"))
     app.config.from_mapping(config)
-    log_level = os.environ.get("LOG_LEVEL", "INFO")
+    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
     logger = logging.getLogger('ark')
     logger.setLevel(log_level)
     logger.propagate = False
