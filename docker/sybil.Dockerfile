@@ -34,11 +34,11 @@ EXPOSE 5000 8000
 
 ENV ARK_CONFIG api/configs/sybil.json
 ENV LOG_LEVEL "INFO"
-ENV ARK_WORKERS 2
+ENV ARK_THREADS 4
 ENTRYPOINT gunicorn \
 --bind 0.0.0.0:5000 \
 --timeout 0 \
---workers $ARK_WORKERS \
+--threads $ARK_THREADS \
 --log-level $LOG_LEVEL \
 --access-logfile - \
 "main:create_app()"
