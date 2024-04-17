@@ -22,7 +22,7 @@ RUN pip install --no-cache /wheels/* && rm -rf /wheels/
 # Copy/Install model code
 RUN git clone https://github.com/reginabarzilaygroup/Sybil.git
 RUN pip install --no-cache-dir --disable-pip-version-check \
-    --find-links https://download.pytorch.org/whl/cu113/torch_stable.html git+https://github.com/reginabarzilaygroup/Sybil.git@v1.1.0
+    --find-links https://download.pytorch.org/whl/cu113/torch_stable.html git+https://github.com/reginabarzilaygroup/Sybil.git@v1.2.0
 
 # Download and cache trained models
 RUN python -c "from sybil import Sybil; model = Sybil('sybil_ensemble')"
@@ -30,6 +30,15 @@ RUN python -c "from sybil import Sybil; model = Sybil('sybil_ensemble')"
 # Copy server code
 COPY . .
 
-EXPOSE 5000
+EXPOSE 5000 8000
 
-ENTRYPOINT ["python", "main.py", "--config", "api/configs/sybil.json"]
+ENV ARK_CONFIG api/configs/sybil.json
+ENV LOG_LEVEL "INFO"
+ENV ARK_THREADS 4
+ENTRYPOINT gunicorn \
+--bind 0.0.0.0:5000 \
+--timeout 0 \
+--threads $ARK_THREADS \
+--log-level $LOG_LEVEL \
+--access-logfile - \
+"main:create_app()"

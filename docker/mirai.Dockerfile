@@ -21,17 +21,26 @@ RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels/
 
 # Copy/Install model code
 RUN git clone https://github.com/reginabarzilaygroup/Mirai.git
-RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.com/reginabarzilaygroup/Mirai.git@v0.6.0
+RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.com/reginabarzilaygroup/Mirai.git@v0.7.0
 
 # Copy server code
 COPY . .
 
-# Download trained model from Dropbox
-RUN wget 'https://github.com/reginabarzilaygroup/Mirai/releases/latest/download/snapshots.zip' -O /tmp/snapshots.zip \
+# Download trained model weights
+RUN wget 'https://github.com/reginabarzilaygroup/Mirai/releases/download/v0.6.0/snapshots.zip' -O /tmp/snapshots.zip \
 && mkdir -p models/snapshots && unzip -o -d models/snapshots/ /tmp/snapshots.zip
 
 ENV NAME ark
 
-EXPOSE 5000
+EXPOSE 5000 8000
 
-ENTRYPOINT ["python", "main.py", "--config", "api/configs/mirai.json"]
+ENV ARK_CONFIG api/configs/mirai.json
+ENV LOG_LEVEL "INFO"
+ENV ARK_THREADS 4
+ENTRYPOINT gunicorn \
+--bind 0.0.0.0:5000 \
+--timeout 0 \
+--threads $ARK_THREADS \
+--log-level $LOG_LEVEL \
+--access-logfile - \
+"main:create_app()"

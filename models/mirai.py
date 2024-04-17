@@ -1,4 +1,5 @@
 import logging
+import os
 import pickle
 import tempfile
 
@@ -42,8 +43,8 @@ class MiraiModel(BaseModel):
         # Add use precomputed hiddens for models trained before it was introduced.
         # Assumes a resnet WHybase backbone
         try:
-            model._model.args.use_precomputed_hiddens = self.args.use_precomputed_hiddens
             model._model.args.cuda = self.args.cuda
+            model._model.args.use_precomputed_hiddens = self.args.use_precomputed_hiddens
         except Exception as e:
             logger.debug("Exception caught, skipping precomputed hiddens")
             pass
@@ -64,20 +65,21 @@ class MiraiModel(BaseModel):
     def process_image_joint(self, batch, model, callibrator, risk_factor_vector=None):
         logger.info("Getting predictions...")
 
-        # Apply transformers
-        x = batch['x']
-        risk_factors = autograd.Variable(risk_factor_vector.unsqueeze(0)) if risk_factor_vector is not None else None
-
         if self.args.cuda:
-            x = x.cuda()
-            model = model.cuda()
-            logger.debug("Inference with GPU")
+            device = get_default_device()
+            logger.debug(f"Inference with {device}")
+            for obj in [model, model.transformer]:
+                obj.to(device)
+            for key, val in batch.items():
+                batch[key] = val.to(device)
         else:
             model = model.cpu()
             logger.debug("Inference with CPU")
 
+        risk_factors = autograd.Variable(risk_factor_vector.unsqueeze(0)) if risk_factor_vector is not None else None
+
         # Index 0 to toss batch dimension
-        logit, _, _ = model(x, risk_factors, batch)
+        logit, _, _ = model(batch['x'], risk_factors, batch)
         probs = F.sigmoid(logit).cpu().data.numpy()
         pred_y = np.zeros(probs.shape[1])
 
@@ -178,9 +180,23 @@ class MiraiModel(BaseModel):
         risk_factor_vector = None
 
         y = self.process_exam(images, risk_factor_vector)
-        logging.debug('Raw Predictions: ', y)
+        logger.debug('Raw Predictions: ', y)
 
         y = {'Year {}'.format(i+1): round(p, 4) for i, p in enumerate(y)}
         report = {'predictions': y}
 
         return report
+
+
+def get_default_device():
+    if torch.cuda.is_available():
+        return torch.device('cuda')
+    elif torch.backends.mps.is_available():
+        # Not all operations implemented in MPS yet
+        use_mps = os.environ.get("PYTORCH_ENABLE_MPS_FALLBACK", "0") == "1"
+        if use_mps:
+            return torch.device('mps')
+        else:
+            return torch.device('cpu')
+    else:
+        return torch.device('cpu')

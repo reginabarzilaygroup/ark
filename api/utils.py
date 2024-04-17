@@ -18,7 +18,9 @@ def validate_post_request(req, required=None, max_size=8 * 10**8):
     Returns:
         None
     """
-    if req.form and req.content_length > max_size:
+
+    over_content_length = req.content_length and req.content_length > max_size
+    if req.form and over_content_length:
         raise RuntimeError("Request data too large: {} > {}".format(req.content_length, max_size))
 
     if required is not None:
