@@ -121,8 +121,20 @@ def set_routes(app):
         return send_from_directory(app.static_folder, 'index.html')
 
 
+def safe_path(base_path, user_input) -> str:
+    # Normalize the path to prevent directory traversal
+    normalized_path = os.path.normpath(user_input)
+    # Restrict to base path
+    if os.path.commonpath([base_path, os.path.join(base_path, normalized_path)]) != base_path:
+        raise ValueError("Invalid path")
+    return str(os.path.join(base_path, normalized_path))
+
+
 def build_app(config):
-    app = Flask('ark', static_folder=os.environ.get('STATIC_FOLDER', "static"))
+    static_folder = os.environ.get('STATIC_FOLDER', "static")
+    static_folder = safe_path(os.getcwd(), static_folder)
+    app = Flask('ark', static_folder=static_folder)
+
     app.config.from_mapping(config)
     log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
     logger = logging.getLogger('ark')

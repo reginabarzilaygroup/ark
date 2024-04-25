@@ -7,18 +7,6 @@ dependencies:
   - python=3.8
   - pip
   # Server
-  - coverage<6.0
-  - coverage-badge==1.1.0
-  - flask==2.0.2
-  - Pillow==9.0.0
-  - pydicom==2.3.0
-  - requests==2.27.1
-  - requests-file==1.5.1
-  - tqdm==4.62.3
-  # Model
-  - lifelines==0.24.15
-  - scikit-image==0.18.2
-  - scikit-learn==0.23.2
-  - torchvision==0.10.0
+  # Note this will not include any model
   - pip:
-      - torch==1.9.0
+      - -r file:requirements.txt

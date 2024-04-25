@@ -9,7 +9,7 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
 
     // Display message right after the data is sent
     const uploadTime = new Date().toLocaleTimeString();
-    document.getElementById('predictionResponse').innerHTML = `Data uploaded at ${uploadTime}, waiting for response...`;
+    document.getElementById('predictionResponse').textContent = `Data uploaded at ${uploadTime}, waiting for response...`;
 
     fetch('/dicom/files', {
         method: 'POST',
@@ -22,7 +22,7 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
         document.getElementById('predictionResponse').innerHTML = `Response received at ${responseTime}:<br><pre>${JSON.stringify(data, null, 2)}</pre>`;
     })
     .catch(error => {
-        document.getElementById('predictionResponse').innerHTML = 'Upload failed: ' + error;
+        document.getElementById('predictionResponse').textContent = 'Upload failed: ' + error;
     });
 });
 

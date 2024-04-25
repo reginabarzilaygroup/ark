@@ -44,6 +44,10 @@ For more information, see:
 
 
 def main():
+    ENV_FILE = os.getenv('ARK_ENV_FILE', None)
+    if ENV_FILE:
+        dotenv.load_dotenv(ENV_FILE)
+
     app = create_app()
     port = int(os.getenv('ARK_FLASK_PORT', 5000))
     debug = os.getenv('ARK_FLASK_DEBUG', "false").lower() == "true"
@@ -66,10 +70,6 @@ def create_app():
 
 
 if __name__ == '__main__':
-    ENV_FILE = os.getenv('ARK_ENV_FILE', None)
-    if ENV_FILE:
-        dotenv.load_dotenv(ENV_FILE)
-
     if len(sys.argv) > 1 and sys.argv[1] in {"help", "--help", "-h"}:
         print(__doc__)
         exit(0)

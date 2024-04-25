@@ -22,7 +22,7 @@ RUN pip install --no-cache /wheels/* && rm -rf /wheels/
 # Copy/Install model code
 RUN git clone https://github.com/reginabarzilaygroup/Sybil.git
 RUN pip install --no-cache-dir --disable-pip-version-check \
-    --find-links https://download.pytorch.org/whl/cu113/torch_stable.html git+https://github.com/reginabarzilaygroup/Sybil.git@v1.2.0
+    --find-links https://download.pytorch.org/whl/cu113/torch_stable.html git+https://github.com/reginabarzilaygroup/Sybil.git@v1.2.1
 
 # Download and cache trained models
 RUN python -c "from sybil import Sybil; model = Sybil('sybil_ensemble')"
