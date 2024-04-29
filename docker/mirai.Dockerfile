@@ -20,8 +20,9 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels/
 
 # Copy/Install model code
+ARG MODEL_COMMIT=v0.7.0
 RUN git clone https://github.com/reginabarzilaygroup/Mirai.git
-RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.com/reginabarzilaygroup/Mirai.git@v0.7.0
+RUN pip install --no-cache-dir --disable-pip-version-check git+https://github.com/reginabarzilaygroup/Mirai.git@${MODEL_COMMIT}
 
 # Copy server code
 COPY . .
