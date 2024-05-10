@@ -13,9 +13,15 @@ from api.logging import async_log_analytics, get_info_dict
 from models import model_dict
 
 
+class Args(object):
+    def __init__(self, config_dict):
+        self.__dict__.update(config_dict)
+
+
 def set_model(app):
     model_name = app.config['MODEL_NAME']
     model_args = app.config['MODEL_ARGS']
+    model_args = Args(model_args)
 
     if model_name in model_dict:
         app.config['MODEL'] = model_dict[model_name](model_args)
