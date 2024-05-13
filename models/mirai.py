@@ -14,7 +14,6 @@ class MiraiModelWrapper(BaseModel):
 
         logger = logging.getLogger('ark')
         logger.info(f"Beginning inference version {self.model.__version__}")
-        scores = self.model.run_model(dicom_files, payload=payload)
-        report = {'predictions': scores}
+        report = self.model.run_model(dicom_files, payload=payload)
 
         return report
