@@ -14,9 +14,9 @@ model_dict = {
 }
 
 if importlib.util.find_spec('onconet') is not None:
-    from .mirai import MiraiModel
+    from .mirai import MiraiModelWrapper
     from .density import DensityModel
-    model_dict['mirai'] = MiraiModel
+    model_dict['mirai'] = MiraiModelWrapper
     model_dict['density'] = DensityModel
 
 if importlib.util.find_spec('sybil') is not None:

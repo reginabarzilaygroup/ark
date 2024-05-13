@@ -20,7 +20,7 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache /wheels/* && rm -rf /wheels/
 
 # Copy/Install model code
-ARG MODEL_COMMIT=v1.2.0
+ARG MODEL_COMMIT=v1.2.1
 RUN git clone https://github.com/reginabarzilaygroup/Sybil.git
 RUN pip install --no-cache-dir --disable-pip-version-check \
     --find-links https://download.pytorch.org/whl/cu117/torch_stable.html git+https://github.com/reginabarzilaygroup/Sybil.git@${MODEL_COMMIT}
