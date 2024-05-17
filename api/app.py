@@ -142,11 +142,6 @@ def build_app(config):
     app = Flask('ark', static_folder=static_folder)
 
     app.config.from_mapping(config)
-    log_level = os.environ.get("LOG_LEVEL", "INFO").upper()
-    logger = logging.getLogger('ark')
-    logger.setLevel(log_level)
-    logger.propagate = False
-
     app.config['API_VERSION'] = api_version
     set_model(app)
     set_routes(app)

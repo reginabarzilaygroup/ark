@@ -1,10 +1,9 @@
 import json
+import logging
 import os
 import sys
 
 import dotenv
-
-from api.app import build_app
 
 DEFAULT_CONFIG_PATH = "api/configs/empty.json"
 
@@ -43,11 +42,23 @@ For more information, see:
 """
 
 
-def main():
+def configure_loggers():
+    from api.logging_utils import configure_logger, LOGLEVEL_KEY
+    log_level = os.environ.get(LOGLEVEL_KEY, "INFO").upper()
+    logger_names = ["ark", "mirai_full", "onconet.utils.dicom", "sybil"]
+    for name in logger_names:
+        configure_logger(loglevel=log_level, logger_name=name)
+
+
+def common_setup():
     ENV_FILE = os.getenv('ARK_ENV_FILE', None)
     if ENV_FILE:
         dotenv.load_dotenv(ENV_FILE)
 
+    configure_loggers()
+
+
+def main():
     app = create_app()
     port = int(os.getenv('ARK_FLASK_PORT', 5000))
     debug = os.getenv('ARK_FLASK_DEBUG', "false").lower() == "true"
@@ -55,6 +66,7 @@ def main():
 
 
 def create_app():
+    common_setup()
     config_path = os.getenv('ARK_CONFIG')
     if config_path is None:
         print(f"Warning: No config path provided to ARK. Using default config at {DEFAULT_CONFIG_PATH}.")
@@ -65,7 +77,8 @@ def create_app():
     with open(config_path, 'r') as f:
         config = json.load(f)
 
-    app = build_app(config)
+    import api.app
+    app = api.app.build_app(config)
     return app
 
 
