@@ -1,7 +1,5 @@
 import json
-import logging
 import os
-import threading
 import traceback
 import time
 
@@ -9,7 +7,7 @@ from flask import Flask, request, send_from_directory
 
 from api import __version__ as api_version
 from api.utils import dicom_dir_walk, download_zip, validate_post_request
-from api.logging import async_log_analytics, get_info_dict
+from api.logging_utils import get_info_dict
 from models import model_dict
 
 
@@ -39,7 +37,6 @@ def set_routes(app):
         start = time.time()
 
         app.logger.info("Request received at /dicom/files")
-        # async_log_analytics(app, {"url": "/dicom/files"})
 
         response = {'data': None, 'metadata': None, 'message': None, 'statusCode': 200}
         model = app.config['MODEL']

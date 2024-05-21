@@ -8,6 +8,15 @@ LOGGER_NAME = "ark"
 LOGLEVEL_KEY = "LOG_LEVEL"
 
 
+def get_info_dict(app):
+    info_dict = {
+        'apiVersion': app.config['API_VERSION'],
+        'modelName': app.config['MODEL_NAME'],
+        'modelVersion': app.config['MODEL'].__version__,
+    }
+    return info_dict
+
+
 def _get_formatter(loglevel="INFO"):
     warn_fmt = "[%(asctime)s] %(levelname)s -%(message)s"
     debug_fmt = "[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s - %(message)s"
