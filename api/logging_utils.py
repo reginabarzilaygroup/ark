@@ -29,7 +29,10 @@ def _get_formatter(loglevel="INFO"):
 
 def remove_all_handlers(logger):
     while logger.hasHandlers():
-        logger.removeHandler(logger.handlers[0])
+        try:
+            logger.removeHandler(logger.handlers[0])
+        except IndexError:
+            break
 
 
 def configure_logger(loglevel=None, logger_name=LOGGER_NAME, logfile=None):
