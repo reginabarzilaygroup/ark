@@ -18,7 +18,7 @@ def get_info_dict(app):
 
 
 def _get_formatter(loglevel="INFO"):
-    warn_fmt = "[%(asctime)s] %(levelname)s -%(message)s"
+    warn_fmt = "[%(asctime)s] %(levelname)s - %(message)s"
     debug_fmt = "[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s - %(message)s"
     fmt = debug_fmt if loglevel.upper() in {"DEBUG"} else warn_fmt
     return logging.Formatter(
