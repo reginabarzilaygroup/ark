@@ -1,0 +1,4 @@
+include version.py
+include ark_run.py
+recursive-include api *.py
+recursive-include api/configs *.json

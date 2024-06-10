@@ -5,7 +5,9 @@ import sys
 
 import dotenv
 
-DEFAULT_CONFIG_PATH = "api/configs/empty.json"
+PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
+CONFIG_DIR = os.path.join(PROJECT_DIR, "api", "configs")
+DEFAULT_CONFIG_PATH = os.path.join(CONFIG_DIR, "empty.json")
 
 __doc__ = f"""
 Ark: A simple tool for serving predictive models as web services.
@@ -45,7 +47,7 @@ For more information, see:
 def configure_loggers():
     from api.logging_utils import configure_logger, LOGLEVEL_KEY
     log_level = os.environ.get(LOGLEVEL_KEY, "INFO").upper()
-    logger_names = ["ark", "mirai_full", "onconet.utils.dicom", "sybil"]
+    logger_names = ["ark", "mirai", "sybil"]
     for name in logger_names:
         configure_logger(loglevel=log_level, logger_name=name)
 
@@ -82,9 +84,14 @@ def create_app():
     return app
 
 
-if __name__ == '__main__':
+def _check_help():
     if len(sys.argv) > 1 and sys.argv[1] in {"help", "--help", "-h"}:
+        return True
+    return False
+
+
+if __name__ == '__main__':
+    if _check_help():
         print(__doc__)
         exit(0)
-
     main()

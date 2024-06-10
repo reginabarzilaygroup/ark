@@ -2,7 +2,6 @@ import os
 import requests
 import zipfile
 
-import pydicom
 from requests_file import FileAdapter
 from werkzeug.datastructures import FileStorage
 
@@ -60,6 +59,7 @@ def download_zip(uri, path='/tmp/', local_file=False):
 
 
 def dicom_dir_walk(path='/tmp'):
+    import pydicom
     dir_path = path + '/dicom'
 
     dicom_files = []
