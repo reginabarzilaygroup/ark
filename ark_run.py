@@ -70,15 +70,16 @@ def cli_entrypoint(model_name="auto"):
 
     LOGLEVEL_KEY = "LOG_LEVEL"
     loglevel = os.environ.get(LOGLEVEL_KEY, "INFO")
+    threads = os.environ.get("ARK_THREADS", "4")
     args = ["gunicorn",
             "--bind", "0.0.0.0:5000",
             "--timeout", "0",
-            "--threads", "4",
+            "--threads", threads,
             "--log-level", loglevel,
             "--access-logfile", "-",
             "main:create_app()"]
 
-    proc = subprocess.run(args, stdout=None, stderr=None, text=True)
+    proc = subprocess.run(args, stdout=None, stderr=None, text=True, cwd=PROJECT_DIR)
 
 
 def cli_entrypoint_empty():
