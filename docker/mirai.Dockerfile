@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir --disable-pip-version-check \
 RUN mirai-predict --dry-run
 
 # Copy and install server code
-ARG ARK_COMMIT=v0.6.1
+ARG ARK_COMMIT=v0.6.1_dev
 RUN git clone https://github.com/reginabarzilaygroup/ark.git
 RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .

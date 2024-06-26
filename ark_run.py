@@ -2,6 +2,7 @@
 
 import importlib.util
 import os
+import platform
 import subprocess
 import sys
 
@@ -71,13 +72,21 @@ def cli_entrypoint(model_name="auto"):
     LOGLEVEL_KEY = "LOG_LEVEL"
     loglevel = os.environ.get(LOGLEVEL_KEY, "INFO")
     threads = os.environ.get("ARK_THREADS", "4")
-    args = ["gunicorn",
-            "--bind", "0.0.0.0:5000",
-            "--timeout", "0",
-            "--threads", threads,
-            "--log-level", loglevel,
-            "--access-logfile", "-",
-            "main:create_app()"]
+    if platform.system() == "Windows":
+        args = ["waitress-serve",
+                "--channel-timeout", "3600",
+                "--threads", threads,
+                "--port", "5000",
+                "--call", "main:create_app"]
+
+    else:
+        args = ["gunicorn",
+                "--bind", "0.0.0.0:5000",
+                "--timeout", "0",
+                "--threads", threads,
+                "--log-level", loglevel,
+                "--access-logfile", "-",
+                "main:create_app()"]
 
     proc = subprocess.run(args, stdout=None, stderr=None, text=True, cwd=PROJECT_DIR)
 
