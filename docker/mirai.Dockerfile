@@ -20,7 +20,7 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache-dir /wheels/* && rm -rf /wheels/
 
 # Copy/Install model code
-ARG MODEL_COMMIT=v0.12.0_dev
+ARG MODEL_COMMIT=v0.12.0
 RUN pip install --no-cache-dir --disable-pip-version-check \
     git+https://github.com/reginabarzilaygroup/Mirai.git@${MODEL_COMMIT}
 
@@ -28,7 +28,7 @@ RUN pip install --no-cache-dir --disable-pip-version-check \
 RUN mirai-predict --dry-run
 
 # Copy and install server code
-ARG ARK_COMMIT=v0.6.1_dev
+ARG ARK_COMMIT=v0.6.1
 RUN git clone https://github.com/reginabarzilaygroup/ark.git
 RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .
