@@ -1,5 +1,6 @@
 import logging
 import tempfile
+import os
 
 from models.base import BaseModel
 from sybil import Serie, Sybil
@@ -31,7 +32,8 @@ class SybilModel(BaseModel):
                 logger.warning("{}: {}".format(type(e).__name__, e))
 
         serie = Serie(dicom_paths)
-        scores = self.model.predict([serie])
+        threads = int(os.getenv("SYBIL_THREADS", 0))
+        scores = self.model.predict([serie], threads=threads)
 
         report = {'predictions': scores}
 
