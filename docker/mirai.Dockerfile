@@ -28,16 +28,16 @@ RUN pip install --no-cache-dir --disable-pip-version-check \
 RUN mirai-predict --dry-run
 
 # Copy and install server code
-ARG ARK_COMMIT=v0.6.1
+ARG ARK_COMMIT=v0.6.2
 RUN git clone https://github.com/reginabarzilaygroup/ark.git
 RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .
 
 WORKDIR /app/ark
-ENV NAME ark
+ENV NAME=ark
 
 EXPOSE 5000 8000
 
-ENV LOG_LEVEL "INFO"
-ENV ARK_THREADS 4
+ENV LOG_LEVEL="INFO"
+ENV ARK_THREADS=4
 ENTRYPOINT ark-run mirai
