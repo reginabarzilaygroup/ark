@@ -29,6 +29,15 @@
         <div class="textDisplay" id="predictionResponse">Model prediction response will appear here</div>
     </div>
 
+        <div id="nextRow">
+        {% if show_scores_link %}
+        <pre>    Download All Saved Scores:<br>
+    <a href="/scores?format=jsonl">JSON Lines</a><br>
+    <a href="/scores?format=csv">CSV</a><br>
+        </pre>
+        {% endif %}
+    </div>
+
     <hr> <!-- Horizontal line for separation -->
 
     <div id="linksSection">

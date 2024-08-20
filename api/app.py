@@ -1,11 +1,13 @@
+import io
 import json
 import os
 import traceback
 import time
 
-from flask import Flask, request, send_from_directory
+from flask import Flask, request, send_from_directory, render_template
 
-from api import __version__ as api_version
+from api import __version__ as api_version, logging_utils
+from api.storage import save_scores, DEFAULT_SAVE_PATH, get_csv_from_jsonl, ARK_SAVE_SCORES_KEY, ARK_SAVE_SCORES_PATH_KEY
 from api.utils import dicom_dir_walk, download_zip, validate_post_request
 from api.logging_utils import get_info_dict
 from models import model_dict
@@ -53,6 +55,14 @@ def set_routes(app):
             app.logger.debug("Received {} valid files".format(len(dicom_files)))
 
             response["data"] = model.run_model(dicom_files, payload=payload)
+
+            if os.environ.get(ARK_SAVE_SCORES_KEY, "false").lower() == "true":
+                my_dicom = dicom_files[0]
+                my_dicom.seek(0)
+                dicom_bytes = io.BytesIO(my_dicom.read())
+                addl_info = logging_utils.get_info_dict(app)
+                save_scores(dicom_bytes, response, addl_info=addl_info)
+
         except Exception as e:
             short_msg = "{}: {}".format(type(e).__name__, e)
             long_msg = traceback.format_exc(limit=10)
@@ -65,6 +75,36 @@ def set_routes(app):
         app.logger.debug("Request completed in {}".format(runtime))
 
         return response, response['statusCode']
+
+    @app.route('/scores', methods=['GET'])
+    def get_scores():
+        """Endpoint to download scores file"""
+        try:
+            scores_format = request.args.get('format', "jsonl")
+            scores_file_path = os.environ.get(ARK_SAVE_SCORES_PATH_KEY, DEFAULT_SAVE_PATH)
+            if not os.path.exists(scores_file_path):
+                ark_save_scores = os.environ.get(ARK_SAVE_SCORES_KEY, "false")
+                msg = f"Scores file not found at {scores_file_path}. "
+                msg += "Ensure ARK_SAVE_SCORES=true and ARK_SAVE_SCORES_PATH is set correctly. "
+                msg += f"Right now, ARK_SAVE_SCORES={ark_save_scores} and ARK_SAVE_SCORES_PATH={scores_file_path}. "
+                return {"message": msg, "statusCode": 404}, 404
+
+            if scores_format == "jsonl":
+                base_path = os.path.dirname(scores_file_path)
+                filename = os.path.basename(scores_file_path)
+                return send_from_directory(base_path, filename, as_attachment=True)
+            elif scores_format == "csv":
+                csv_data = get_csv_from_jsonl(scores_file_path)
+                return csv_data, 200, {'Content-Type': 'text/csv'}
+            else:
+                raise ValueError(f"Invalid format {scores_format}")
+
+        except Exception as e:
+            short_msg = "{}: {}".format(type(e).__name__, e)
+            long_msg = traceback.format_exc(limit=10)
+            app.logger.error(long_msg)
+            response = {'message': short_msg, 'statusCode': 400}
+            return response, response['statusCode']
 
     @app.route('/dicom/uri', methods=['POST'])
     def dicom_uri():
@@ -121,7 +161,9 @@ def set_routes(app):
     @app.route('/index', methods=['GET'])
     def home():
         """Return homepage. Note that routing is order-specific, so we put this last."""
-        return send_from_directory(app.static_folder, 'index.html')
+        scores_path = os.environ.get(ARK_SAVE_SCORES_PATH_KEY, DEFAULT_SAVE_PATH)
+        show_scores_link = os.path.exists(scores_path)
+        return render_template('index.html', show_scores_link=show_scores_link)
 
 
 def safe_path(base_path, user_input) -> str:
