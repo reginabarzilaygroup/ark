@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir --disable-pip-version-check \
 RUN python -c "from sybil import Sybil; model = Sybil('sybil_ensemble')"
 
 # Copy server code
-ARG ARK_COMMIT=v0.6.2
+ARG ARK_COMMIT=v0.7.0
 RUN git clone https://github.com/reginabarzilaygroup/ark.git
 RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .
