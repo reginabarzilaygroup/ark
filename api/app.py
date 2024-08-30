@@ -157,6 +157,7 @@ def set_routes(app):
 
         return response, response['statusCode']
 
+    @app.route('/', methods=['GET'])
     @app.route('/home', methods=['GET'])
     @app.route('/index', methods=['GET'])
     def home():
