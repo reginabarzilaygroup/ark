@@ -1,4 +1,4 @@
-name: ark
+name: arkxx
 channels:
   - conda-forge
   - defaults
@@ -9,4 +9,4 @@ dependencies:
   # Server
   # Note this will not include any model
   - pip:
-      - -r file:requirements.txt
+      - .
