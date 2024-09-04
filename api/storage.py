@@ -6,6 +6,7 @@ import os
 from typing import Dict, List, Union, BinaryIO, Tuple
 
 import pydicom
+from pydicom import FileDataset
 
 DEFAULT_SAVE_PATH = os.path.expanduser("~/.ark/all_scores.jsonl")
 ARK_SAVE_SCORES_KEY = "ARK_SAVE_SCORES"
@@ -14,7 +15,7 @@ ARK_SAVE_SCORES_PATH_KEY = "ARK_SAVE_SCORES_PATH"
 DICOM_TYPE = Union[str, bytes, BinaryIO]
 
 
-def extract_dicom_metadata(dicom_file: DICOM_TYPE) -> Dict:
+def extract_dicom_metadata(dicom_file: Union[DICOM_TYPE, FileDataset]) -> Dict:
     """
     Extracts and returns Dict of DICOM file metadata such as patient ID, series ID.
 
@@ -24,7 +25,12 @@ def extract_dicom_metadata(dicom_file: DICOM_TYPE) -> Dict:
     Returns:
         dict: Dictionary containing extracted metadata.
     """
-    ds = pydicom.dcmread(dicom_file)
+
+    if isinstance(dicom_file, FileDataset):
+        ds = dicom_file
+    else:
+        ds = pydicom.dcmread(dicom_file)
+
     meta_keys = ['PatientID', 'AccessionNumber', 'StudyID', 'StudyInstanceUID', 'SeriesInstanceUID']
 
     metadata = dict()
@@ -34,12 +40,12 @@ def extract_dicom_metadata(dicom_file: DICOM_TYPE) -> Dict:
     return metadata
 
 
-def save_scores(dicom_file: DICOM_TYPE, scores_dict: Dict, addl_info: Dict = None):
+def save_scores(template_dcm: DICOM_TYPE, scores_dict: Dict, addl_info: Dict = None):
     save_path = os.environ.get(ARK_SAVE_SCORES_PATH_KEY, DEFAULT_SAVE_PATH)
     save_dir = os.path.dirname(save_path)
     os.makedirs(save_dir, exist_ok=True)
 
-    metadata_dict = extract_dicom_metadata(dicom_file)
+    metadata_dict = extract_dicom_metadata(template_dcm)
     save_dict = scores_dict.copy()
     save_dict.update(metadata_dict)
     if addl_info:

@@ -1,13 +1,9 @@
-import json
-import logging
 import os
 import sys
 
-import dotenv
-
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_DIR = os.path.join(PROJECT_DIR, "api", "configs")
-DEFAULT_CONFIG_PATH = os.path.join(CONFIG_DIR, "empty.json")
+import api.app
+import api.config
+from api.config import DEFAULT_CONFIG_PATH, common_setup
 
 __doc__ = f"""
 Ark: A simple tool for serving predictive models as web services.
@@ -44,22 +40,6 @@ For more information, see:
 """
 
 
-def configure_loggers():
-    from api.logging_utils import configure_logger, LOGLEVEL_KEY
-    log_level = os.environ.get(LOGLEVEL_KEY, "INFO").upper()
-    logger_names = ["ark", "mirai", "sybil"]
-    for name in logger_names:
-        configure_logger(loglevel=log_level, logger_name=name)
-
-
-def common_setup():
-    ENV_FILE = os.getenv('ARK_ENV_FILE', None)
-    if ENV_FILE:
-        dotenv.load_dotenv(ENV_FILE)
-
-    configure_loggers()
-
-
 def main():
     app = create_app()
     port = int(os.getenv('ARK_FLASK_PORT', 5000))
@@ -69,17 +49,7 @@ def main():
 
 def create_app():
     common_setup()
-    config_path = os.getenv('ARK_CONFIG')
-    if config_path is None:
-        print(f"Warning: No config path provided to ARK. Using default config at {DEFAULT_CONFIG_PATH}.")
-        print(f"To actually load a predictive model, set the ARK_CONFIG environment variable."
-              f"For example:\nARK_CONFIG=api/configs/mirai.json python main.py\nWould load the Mirai model.")
-        config_path = DEFAULT_CONFIG_PATH
-
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-
-    import api.app
+    config = api.config.get_config()
     app = api.app.build_app(config)
     return app
 

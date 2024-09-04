@@ -3,10 +3,11 @@ import json
 import os
 import traceback
 import time
+from typing import Mapping, Any, Dict
 
 from flask import Flask, request, send_from_directory, render_template
 
-from api import __version__ as api_version, logging_utils
+from api import logging_utils
 from api.storage import save_scores, DEFAULT_SAVE_PATH, get_csv_from_jsonl, ARK_SAVE_SCORES_KEY, ARK_SAVE_SCORES_PATH_KEY
 from api.utils import dicom_dir_walk, download_zip, validate_post_request
 from api.logging_utils import get_info_dict
@@ -18,20 +19,20 @@ class Args(object):
         self.__dict__.update(config_dict)
 
 
-def set_model(app):
-    model_name = app.config['MODEL_NAME']
-    model_args = app.config['MODEL_ARGS']
+def set_model(config: Dict[str, Any]):
+    model_name = config['MODEL_NAME']
+    model_args = config['MODEL_ARGS']
     model_args = Args(model_args)
 
     if model_name in model_dict:
-        app.config['MODEL'] = model_dict[model_name](model_args)
+        config['MODEL'] = model_dict[model_name](model_args)
     else:
         raise KeyError("Model '{}' not found in model dictionary".format(model_name))
 
 
 def set_routes(app):
 
-    @app.route('/serve', methods=['POST'])  # TODO: Legacy endpoint, remove on 1.0
+
     @app.route('/dicom/files', methods=['POST'])
     def dicom():
         """Endpoint to upload physical files
@@ -60,8 +61,9 @@ def set_routes(app):
                 my_dicom = dicom_files[0]
                 my_dicom.seek(0)
                 dicom_bytes = io.BytesIO(my_dicom.read())
-                addl_info = logging_utils.get_info_dict(app)
-                save_scores(dicom_bytes, response, addl_info=addl_info)
+                addl_info = logging_utils.get_info_dict(app.config)
+                addl_info.update(payload.get("metadata", {}))
+                save_scores(dicom_bytes, response["data"], addl_info=addl_info)
 
         except Exception as e:
             short_msg = "{}: {}".format(type(e).__name__, e)
@@ -146,7 +148,7 @@ def set_routes(app):
         response = {'data': None, 'message': None, 'statusCode': 200}
 
         try:
-            info_dict = get_info_dict(app)
+            info_dict = get_info_dict(app.config)
 
             response['data'] = info_dict
         except Exception as e:
@@ -182,8 +184,7 @@ def build_app(config):
     app = Flask('ark', static_folder=static_folder)
 
     app.config.from_mapping(config)
-    app.config['API_VERSION'] = api_version
-    set_model(app)
+    set_model(app.config)
     set_routes(app)
 
     return app

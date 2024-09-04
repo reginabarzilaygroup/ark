@@ -8,11 +8,11 @@ LOGGER_NAME = "ark"
 LOGLEVEL_KEY = "LOG_LEVEL"
 
 
-def get_info_dict(app):
+def get_info_dict(config):
     info_dict = {
-        'apiVersion': app.config['API_VERSION'],
-        'modelName': app.config['MODEL_NAME'],
-        'modelVersion': app.config['MODEL'].__version__,
+        'apiVersion': config['API_VERSION'],
+        'modelName': config['MODEL_NAME'],
+        'modelVersion': config['MODEL'].__version__,
     }
     return info_dict
 
@@ -69,13 +69,15 @@ def configure_logger(loglevel=None, logger_name=LOGGER_NAME, logfile=None):
     return logger
 
 
-def get_logger(base_name=LOGGER_NAME):
+def get_logger(base_name=LOGGER_NAME, multiprocessing_safe=False):
     """
     Return a logger.
-    Use a different logger in each subprocess, though they should all have the same log level.
+    If multiprocessing_safe is True, append the process ID to the logger name
     """
-    pid = os.getpid()
-    logger_name = f"{base_name}-process-{pid}"
+    logger_name = base_name
+    if multiprocessing_safe:
+        pid = os.getpid()
+        logger_name = f"{base_name}-process-{pid}"
     logger = logging.getLogger(logger_name)
     if not logger.hasHandlers():
         configure_logger(logger_name=logger_name)

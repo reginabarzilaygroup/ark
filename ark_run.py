@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 
-import importlib.util
 import os
 import platform
 import subprocess
 import sys
 
-PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
-CONFIG_DIR = os.path.join(PROJECT_DIR, "api", "configs")
-DEFAULT_CONFIG_PATH = os.path.join(CONFIG_DIR, "empty.json")
+import api.config
+from api.config import PROJECT_DIR
 
 
 def _check_help():
@@ -55,19 +53,7 @@ def cli_entrypoint(model_name="auto"):
     if len(sys.argv) > 1:
         model_name = sys.argv[1]
 
-    # If model name is specified, use that. Otherwise, detect automatically.
-    if model_name == "auto":
-        if importlib.util.find_spec("onconet"):
-            model_name = "mirai"
-        elif importlib.util.find_spec("sybil"):
-            model_name = "sybil"
-        else:
-            print("No model found in the current environment. Using empty model.")
-            model_name = "empty"
-
-    config_path = os.path.join(CONFIG_DIR, f"{model_name}.json")
-    assert os.path.exists(config_path), f"Config file not found at {config_path}"
-    os.environ['ARK_CONFIG'] = config_path
+    api.config.set_config_by_name(model_name)
 
     LOGLEVEL_KEY = "LOG_LEVEL"
     loglevel = os.environ.get(LOGLEVEL_KEY, "INFO")

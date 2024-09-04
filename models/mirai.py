@@ -10,7 +10,7 @@ class MiraiModelWrapper(BaseModel):
         self.model = MiraiModel(args)
         self.__version__ = self.model.__version__
 
-    def run_model(self, dicom_files, payload=None):
+    def run_model(self, dicom_files, payload=None, to_dict=False):
 
         logger = logging.getLogger('ark')
         logger.info(f"Beginning inference version {self.model.__version__}")

@@ -20,13 +20,20 @@ class SybilModel(BaseModel):
         self.__version__ = sybil_version
         self.model = Sybil(name_or_path='sybil_ensemble')
 
-    def run_model(self, dicom_files, payload=None):
+    def run_model(self, dicom_files, payload=None, to_dict=False):
         dicom_paths = []
 
         for dicom in dicom_files:
             try:
-                dicom_path = tempfile.NamedTemporaryFile(suffix='.dcm').name
-                dicom.save(dicom_path)
+                dicom_file = tempfile.NamedTemporaryFile(suffix='.dcm', delete=False)
+                dicom_path = dicom_file.name
+
+                if hasattr(dicom, 'save'):
+                    dicom.save(dicom_path)
+                else:
+                    dicom_file.write(dicom)
+                    dicom_file.flush()
+
                 dicom_paths.append(dicom_path)
             except Exception as e:
                 logger.warning("{}: {}".format(type(e).__name__, e))
@@ -35,6 +42,15 @@ class SybilModel(BaseModel):
         threads = int(os.getenv("SYBIL_THREADS", 0))
         scores = self.model.predict([serie], threads=threads)
 
-        report = {'predictions': scores}
+        for dicom_path in dicom_paths:
+            try:
+                os.unlink(dicom_path)
+            except Exception as e:
+                pass
+
+        if to_dict:
+            scores = scores.scores[0]
+            scores = {f"Year {idx + 1}": result for idx, result in enumerate(scores)}
+        report = {"predictions": scores}
 
         return report

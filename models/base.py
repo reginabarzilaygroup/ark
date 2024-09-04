@@ -6,7 +6,7 @@ class BaseModel:
         self.__version__ = None
         self.required_data = None
 
-    def run_model(self, dicom_file, payload=None):
+    def run_model(self, dicom_file, payload=None, to_dict=False):
         raise NotImplementedError("run_model function not implemented")
 
 
@@ -15,7 +15,7 @@ class EmptyModel(BaseModel):
         super().__init__()
         self.__version__ = ark_version
 
-    def run_model(self, dicom_file, payload=None):
+    def run_model(self, dicom_file, payload=None, to_dict=False):
         return
 
 
