@@ -65,12 +65,17 @@ def set_routes(app):
                 addl_info.update(payload.get("metadata", {}))
                 save_scores(dicom_bytes, response["data"], addl_info=addl_info)
 
-        except Exception as e:
-            short_msg = "{}: {}".format(type(e).__name__, e)
-            long_msg = traceback.format_exc(limit=10)
-            app.logger.error(long_msg)
-            response['message'] = short_msg
-            response['statusCode'] = 400
+    try:
+        dicom_files, payload, return_attentions = _parse_function(response)
+        app.logger.debug(f"Payload: {payload}")
+        app.logger.debug(f"Return attentions: {return_attentions}")
+        response["data"] = _predict_dicom_files(app, model, dicom_files, payload, return_attentions=return_attentions)
+    except Exception as e:
+        short_msg = "{}: {}".format(type(e).__name__, e)
+        long_msg = traceback.format_exc(limit=10)
+        app.logger.error(long_msg)
+        response['message'] = short_msg
+        response['statusCode'] = 400
 
         runtime = "{:.2f}s".format(time.time() - start)
         response['runtime'] = "{:.2f}s".format(time.time() - start)

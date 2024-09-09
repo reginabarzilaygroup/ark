@@ -7,6 +7,11 @@ document.getElementById('upload-form').addEventListener('submit', function(e) {
         formData.append('dicom', files[i]);
     }
 
+    // Add the data payload.
+    // Never want to return attentions to the web UI.
+    const dataPayload = JSON.stringify({ "return_attentions": false });
+    formData.append('data', dataPayload);
+
     // Display message right after the data is sent
     const uploadTime = new Date().toLocaleTimeString();
     document.getElementById('predictionResponse').textContent = `Data uploaded at ${uploadTime}, waiting for response...`;
