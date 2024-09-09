@@ -20,7 +20,7 @@ COPY --from=builder /wheels /wheels
 RUN pip install --no-cache /wheels/* && rm -rf /wheels/
 
 # Copy/Install model code
-ARG MODEL_COMMIT=v1.5.0
+ARG MODEL_COMMIT=v1.6.0
 RUN git clone https://github.com/reginabarzilaygroup/Sybil.git
 RUN pip install --no-cache-dir --disable-pip-version-check \
     --find-links https://download.pytorch.org/whl/cu117/torch_stable.html git+https://github.com/reginabarzilaygroup/Sybil.git@${MODEL_COMMIT}
@@ -29,7 +29,7 @@ RUN pip install --no-cache-dir --disable-pip-version-check \
 RUN python -c "from sybil import Sybil; model = Sybil('sybil_ensemble')"
 
 # Copy server code
-ARG ARK_COMMIT=v0.7.0
+ARG ARK_COMMIT=v0.8.0
 RUN git clone https://github.com/reginabarzilaygroup/ark.git
 RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .
