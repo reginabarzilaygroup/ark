@@ -7,12 +7,15 @@ from typing import Mapping, Any, Dict
 
 from flask import Flask, request, send_from_directory, render_template
 
+import pydicom
+import pydicom.uid
+
+import api.utils
 from api import logging_utils
 from api.storage import save_scores, DEFAULT_SAVE_PATH, get_csv_from_jsonl, ARK_SAVE_SCORES_KEY, ARK_SAVE_SCORES_PATH_KEY
-from api.utils import dicom_dir_walk, download_zip, validate_post_request
+from api.utils import dicom_dir_walk, download_zip, validate_post_request, get_environ_bool
 from api.logging_utils import get_info_dict
 from models import model_dict
-
 
 class Args(object):
     def __init__(self, config_dict):
@@ -29,41 +32,69 @@ def set_model(config: Dict[str, Any]):
     else:
         raise KeyError("Model '{}' not found in model dictionary".format(model_name))
 
+def _parse_multipart(response):
+    """
+    Parse a multipart DICOM file upload, as done in DICOMweb STOW-RS.
+    Args:
+        app:
 
-def set_routes(app):
+    Returns:
 
+    """
+    # Get the boundary from the content-type header
+    content_type = request.headers['Content-Type']
+    boundary = content_type.split("boundary=")[-1]
+    boundary = boundary.encode()
 
-    @app.route('/dicom/files', methods=['POST'])
-    def dicom():
-        """Endpoint to upload physical files
-        """
-        start = time.time()
+    raw_data = request.get_data()
+    parts = raw_data.split(b"--" + boundary)
 
-        app.logger.info("Request received at /dicom/files")
+    # Only keep parts with the appropriate key
+    keep_key = b"Content-Type: application/dicom"
 
-        response = {'data': None, 'metadata': None, 'message': None, 'statusCode': 200}
-        model = app.config['MODEL']
+    dicom_files = []
+    for part in parts:
 
-        try:
-            validate_post_request(request, required=model.required_data)
+        # Only keep parts with the appropriate key
+        if keep_key not in part:
+            continue
 
-            app.logger.debug("Received JSON payload: {}".format(request.form.to_dict()))
-            payload = json.loads(request.form.get("data", "{}"))
-            if 'metadata' in payload:
-                response['metadata'] = payload['metadata']
+        # Find the start of the DICOM data
+        dicom_start = part.find(b'\r\n\r\n') + 4
+        if dicom_start == -1:
+            continue
+        dicom_bytes = part[dicom_start:]
 
-            dicom_files = request.files.getlist("dicom")
-            app.logger.debug("Received {} valid files".format(len(dicom_files)))
+        # Remove any trailing whitespace characters
+        rem_chars = [b"\r\n", b"\n\r", b"\r", b"\n"]
+        for rr in rem_chars:
+            dicom_bytes = dicom_bytes.rstrip(rr)
 
-            response["data"] = model.run_model(dicom_files, payload=payload)
+        dicom_file = io.BytesIO(dicom_bytes)
+        dicom_file.seek(0)
+        dicom_files.append(dicom_file)
 
-            if os.environ.get(ARK_SAVE_SCORES_KEY, "false").lower() == "true":
-                my_dicom = dicom_files[0]
-                my_dicom.seek(0)
-                dicom_bytes = io.BytesIO(my_dicom.read())
-                addl_info = logging_utils.get_info_dict(app.config)
-                addl_info.update(payload.get("metadata", {}))
-                save_scores(dicom_bytes, response["data"], addl_info=addl_info)
+    return dicom_files, {}, False
+
+def _parse_form_request(response):
+    payload = json.loads(request.form.get("data", "{}"))
+    if 'metadata' in payload:
+        response['metadata'] = payload['metadata']
+
+    # Return attentions if set by env variable, which can be overridden by the payload
+    return_attentions = api.utils.get_environ_bool("ARK_RETURN_ATTENTIONS", "false")
+    if "return_attentions" in payload:
+        return_attentions = payload["return_attentions"]
+
+    dicom_files = request.files.getlist("dicom")
+
+    return dicom_files, payload, return_attentions
+
+def _predict_wrapper(app, _parse_function):
+    model = app.config['MODEL']
+    start = time.time()
+    response = {'data': None, 'metadata': None, 'message': None, 'statusCode': 200}
+    dicom_files = []
 
     try:
         dicom_files, payload, return_attentions = _parse_function(response)
@@ -77,11 +108,90 @@ def set_routes(app):
         response['message'] = short_msg
         response['statusCode'] = 400
 
-        runtime = "{:.2f}s".format(time.time() - start)
-        response['runtime'] = "{:.2f}s".format(time.time() - start)
-        app.logger.debug("Request completed in {}".format(runtime))
+    runtime = "{:.2f}s".format(time.time() - start)
+    response['runtime'] = "{:.2f}s".format(time.time() - start)
+    app.logger.debug("Request completed in {}".format(runtime))
 
-        return response, response['statusCode']
+    return response, response['statusCode'], dicom_files
+
+def _predict_dicom_files(app, model, dicom_files, payload, **kwargs):
+    app.logger.debug("Received {} dicom files".format(len(dicom_files)))
+
+    data = model.run_model(dicom_files, payload=payload, **kwargs)
+
+    if get_environ_bool(ARK_SAVE_SCORES_KEY):
+        my_dicom = dicom_files[0]
+        my_dicom.seek(0)
+        dicom_bytes = io.BytesIO(my_dicom.read())
+        addl_info = logging_utils.get_info_dict(app.config)
+        addl_info.update(payload.get("metadata", {}))
+        save_scores(dicom_bytes, data, addl_info=addl_info)
+
+    return data
+
+def _get_uid_dict(dicom_file):
+    dicom_file.seek(0)
+    dcm = pydicom.dcmread(dicom_file)
+    dicom_file.seek(0)
+
+    return {
+        "00081155": {"vr": "UI", "Value": [dcm.StudyInstanceUID]},
+        "00081150": {"vr": "UI", "Value": [dcm.SOPClassUID]},
+    }
+
+def set_routes(app):
+
+    @app.route('/dicom/files', methods=['POST'])
+    def dicom():
+        """Endpoint to upload physical files
+        """
+        app.logger.debug("Request received at /dicom/files")
+        model = app.config['MODEL']
+        validate_post_request(request, required=model.required_data)
+        response, response_code, dicom_files = _predict_wrapper(app, _parse_form_request)
+        return response, response_code
+
+    @app.route('/dicom-web/studies', methods=['POST'])
+    @app.route('/dicom-web/studies/<study_instance_uid>', methods=['POST'])
+    def handle_store(study_instance_uid=None):
+        app.logger.debug("Request received at /dicom-web/studies")
+        if study_instance_uid is not None:
+            app.logger.debug(f"Request received at /dicom-web/studies/{study_instance_uid}")
+
+        if 'multipart/related' not in request.content_type:
+            return "Invalid content type\n", 400
+
+        response, response_code, dicom_files =  _predict_wrapper(app, _parse_multipart)
+
+        # Add study information to the response
+        processed_studies = [_get_uid_dict(dicom_file) for dicom_file in dicom_files]
+
+        success_studies = processed_studies
+        failed_studies = []
+        if 400 <= response_code < 500:
+            success_studies = []
+            failed_studies = processed_studies
+
+        stow_response = {
+            # URLs where the study is accessible via WADO. Currently not supported.
+            "00081190": {
+                "vr": "UR",
+                "Value": []
+            },
+            # Studies processed successfully
+            "00081199": {
+                "vr": "SQ",
+                "Value": success_studies
+            },
+            # Studies that failed to process
+            "00081198": {
+                "vr": "SQ",
+                "Value": failed_studies
+            },
+            "data": response["data"]
+        }
+
+        return stow_response, response_code
 
     @app.route('/scores', methods=['GET'])
     def get_scores():
@@ -90,7 +200,7 @@ def set_routes(app):
             scores_format = request.args.get('format', "jsonl")
             scores_file_path = os.environ.get(ARK_SAVE_SCORES_PATH_KEY, DEFAULT_SAVE_PATH)
             if not os.path.exists(scores_file_path):
-                ark_save_scores = os.environ.get(ARK_SAVE_SCORES_KEY, "false")
+                ark_save_scores = get_environ_bool(ARK_SAVE_SCORES_KEY)
                 msg = f"Scores file not found at {scores_file_path}. "
                 msg += "Ensure ARK_SAVE_SCORES=true and ARK_SAVE_SCORES_PATH is set correctly. "
                 msg += f"Right now, ARK_SAVE_SCORES={ark_save_scores} and ARK_SAVE_SCORES_PATH={scores_file_path}. "
@@ -173,7 +283,6 @@ def set_routes(app):
         show_scores_link = os.path.exists(scores_path)
         return render_template('index.html', show_scores_link=show_scores_link)
 
-
 def safe_path(base_path, user_input) -> str:
     # Normalize the path to prevent directory traversal
     normalized_path = os.path.normpath(user_input)
@@ -181,7 +290,6 @@ def safe_path(base_path, user_input) -> str:
     if os.path.commonpath([base_path, os.path.join(base_path, normalized_path)]) != base_path:
         raise ValueError("Invalid path")
     return str(os.path.join(base_path, normalized_path))
-
 
 def build_app(config):
     static_folder = os.environ.get('STATIC_FOLDER', "static")

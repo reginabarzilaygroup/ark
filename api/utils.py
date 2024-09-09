@@ -5,6 +5,10 @@ import zipfile
 from requests_file import FileAdapter
 from werkzeug.datastructures import FileStorage
 
+def get_environ_bool(key, default="false"):
+    value = os.environ.get(key, default)
+    return value.lower() == "true"
+
 
 def validate_post_request(req, required=None, max_size=8 * 10**8):
     """Validates the DICOM POST JSON payload.
