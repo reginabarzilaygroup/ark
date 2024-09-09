@@ -1,3 +1,4 @@
+import io
 import logging
 import tempfile
 import os
@@ -34,6 +35,7 @@ class SybilModel(BaseModel):
                 if hasattr(dicom, 'save'):
                     dicom.save(dicom_path)
                 else:
+                    dicom = dicom.getvalue() if isinstance(dicom, io.BytesIO) else dicom
                     dicom_file.write(dicom)
                     dicom_file.flush()
 

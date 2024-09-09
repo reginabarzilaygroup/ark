@@ -6,6 +6,7 @@ import time
 from typing import Mapping, Any, Dict
 
 from flask import Flask, request, send_from_directory, render_template
+import werkzeug.datastructures
 
 import pydicom
 import pydicom.uid
@@ -53,6 +54,7 @@ def _parse_multipart(response):
     keep_key = b"Content-Type: application/dicom"
 
     dicom_files = []
+    idx = 0
     for part in parts:
 
         # Only keep parts with the appropriate key
@@ -72,7 +74,10 @@ def _parse_multipart(response):
 
         dicom_file = io.BytesIO(dicom_bytes)
         dicom_file.seek(0)
-        dicom_files.append(dicom_file)
+        filename = f"{idx}.dcm"
+        file_storage = werkzeug.datastructures.FileStorage(stream=dicom_file, filename=filename)
+        dicom_files.append(file_storage)
+        idx += 1
 
     return dicom_files, {}, False
 
