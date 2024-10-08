@@ -1,4 +1,4 @@
-FROM mitjclinic/mirai:latest
+FROM mitjclinic/sybil:latest
 
 RUN apt-get update && apt-get install -y --no-install-recommends orthanc \
 && rm -rf /var/lib/apt/lists/*
@@ -10,4 +10,4 @@ ENV ARK_SAVE_SCORES="true"
 ENV LOG_LEVEL="INFO"
 ENV ARK_THREADS=4
 
-ENTRYPOINT ./orthanc/start_ark_orthanc.sh mirai
+ENTRYPOINT ./orthanc/start_ark_orthanc.sh sybil
