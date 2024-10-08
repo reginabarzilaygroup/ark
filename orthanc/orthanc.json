@@ -1,0 +1,23 @@
+{
+  "Name": "ArkOrthanc",
+  "StorageDirectory": "/var/lib/orthanc/db",
+  "DicomAet": "ORTHANC",
+  "HttpPort": 8042,
+  "DicomPort": 4242,
+  "RemoteAccessAllowed": true,
+  "AuthenticationEnabled": true,
+  "RegisteredUsers": {
+    "ark": "ark"
+  },
+  "OrthancExplorer2" : {
+    "Enable": true,
+    "IsDefaultOrthancUI": false
+  },
+  "DicomWeb": {
+  	"Enable" : true,
+	"Servers" : {
+	      "localhost" : [ "http://localhost:5000/dicom-web/" ]
+	    }
+  },
+  "HttpTimeout" : 600
+}

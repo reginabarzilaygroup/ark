@@ -1,4 +1,4 @@
-name: arkxx
+name: ark
 channels:
   - conda-forge
   - defaults

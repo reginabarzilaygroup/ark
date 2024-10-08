@@ -34,10 +34,12 @@ RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .
 
 WORKDIR /app/ark
-ENV NAME=ark
 
 EXPOSE 5000 8000
 
+ENV NAME=ark
+ENV ARK_SAVE_SCORES="false"
 ENV LOG_LEVEL="INFO"
 ENV ARK_THREADS=4
+
 ENTRYPOINT ark-run mirai

@@ -2,7 +2,6 @@
 **/data/
 **/demo/
 **/tests/
-environment.yml
 snapshots/
 snapshots.zip
 **/mirai_demo_data

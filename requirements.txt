@@ -5,6 +5,7 @@ Werkzeug>=2.2,<3.0
 flask==2.2.5
 gunicorn==22.0.0
 python-dotenv==1.0.0
+pydicom==2.4.4
 requests==2.31.0
 requests-file==1.5.1
 setuptools>=65.5.1
