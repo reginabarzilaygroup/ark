@@ -95,8 +95,9 @@ def create_structured_report(template_ds: pydicom.dataset.FileDataset, analysis_
 
     # Add the 6 numeric results as simple numeric items
     sr_ds.ContentSequence = []
-    if isinstance(analysis_results, List):
-        analysis_results = {f"Year {idx+1}": result for idx, result in enumerate(analysis_results)}
+    if isinstance(analysis_results, List) and isinstance(analysis_results[0], Dict):
+        # For Sybil the score Dict is element 0 of the list
+        analysis_results = analysis_results[0]
 
     for key, value in analysis_results.items():
         item = Dataset()
@@ -308,6 +309,7 @@ def process_new_change(model, change_dict: Dict, config: Mapping, session=None) 
     use_pydicom = api.utils.get_environ_bool("ARK_MIRAI_USE_PYDICOM", "false")
     payload = {"dcmtk": not use_pydicom}
     predictions = model.run_model(image_bytes, to_dict=True, payload=payload)
+    logger.debug(f"Predictions: {predictions}")
 
     prediction_scores = predictions["predictions"]
     code_meaning = f"{config['MODEL_NAME'].capitalize()} Risk Scores"
