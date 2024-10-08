@@ -150,7 +150,7 @@ def send_dicom_dataset(dcm: Union[str, Path, Dataset], dest_ae_title, dest_host,
         logger.error("Association with PACS failed")
 
 
-def send_dicom_http(dcm: Dataset, base_url=None):
+def send_dicom_http(dcm: Dataset, base_url=None, session=None):
     """
     Send a DICOM file over HTTP POST
 
@@ -168,11 +168,13 @@ def send_dicom_http(dcm: Dataset, base_url=None):
 
     if base_url is None:
         base_url = get_base_url()
+    if session is None:
+        session = get_orthanc_session()
 
     logger = logging_utils.get_logger(LOGGER_NAME)
 
     url = f"{base_url}/instances"
-    response = requests.post(url, data=sr_bytes)
+    response = session.post(url, data=sr_bytes)
 
     if response.status_code == 200:
         logger.debug("Successfully uploaded DICOM SR to Orthanc")
@@ -206,11 +208,14 @@ def get_processed_info_dict():
     return processed_dict_path, processed_dict
 
 
-def get_changes(since=0, limit=10_000, base_url=None):
+def get_changes(since=0, limit=10_000, base_url=None, session=None):
     if base_url is None:
         base_url = get_base_url()
 
-    changes = requests.get(f"{base_url}/changes?since={since}&limit={limit}")
+    if session is None:
+        session = get_orthanc_session()
+
+    changes = session.get(f"{base_url}/changes?since={since}&limit={limit}")
     changes = changes.json()
     Last = changes["Last"]
 
@@ -229,16 +234,19 @@ def get_changes(since=0, limit=10_000, base_url=None):
     return changes, Last
 
 
-def get_instances_for_group(group_path: str, base_url=None, modalities=None) -> List[Dict]:
+def get_instances_for_group(group_path: str, base_url=None, modalities=None, session=None) -> List[Dict]:
     logger = logging_utils.get_logger(LOGGER_NAME)
 
     if base_url is None:
         base_url = get_base_url()
 
     if modalities is None:
-        modalities = {"MG", "CT"}
+        modalities = {"MG", "CT", "OT"}
 
-    instances = requests.get(f"{base_url}/{group_path}/instances")
+    if session is None:
+        session = get_orthanc_session()
+
+    instances = session.get(f"{base_url}/{group_path}/instances")
     instances = instances.json()
 
     logger.debug(f"Found {len(instances)} instances in {group_path}")
@@ -254,7 +262,7 @@ def get_instances_for_group(group_path: str, base_url=None, modalities=None) -> 
         instance_file_path = f"instances/{instance_id}/file"
 
         # Download the DICOM image
-        image_bytes = requests.get(f"{base_url}/{instance_file_path}").content
+        image_bytes = session.get(f"{base_url}/{instance_file_path}").content
         image_buffer = io.BytesIO(image_bytes)
         image_ds = pydicom.dcmread(image_buffer)
         if image_ds.Modality not in modalities:
@@ -268,9 +276,10 @@ def get_instances_for_group(group_path: str, base_url=None, modalities=None) -> 
     return all_images
 
 
-def process_new_change(model, change_dict: Dict, config: Mapping) -> List[Dict]:
-
+def process_new_change(model, change_dict: Dict, config: Mapping, session=None) -> List[Dict]:
     logger = logging_utils.get_logger(LOGGER_NAME)
+    if session is None:
+        session = get_orthanc_session()
 
     # When a group (series/study) is stable, we can assume that all images are available
     group_id, group_path = change_dict["ID"], change_dict["Path"]
@@ -305,7 +314,7 @@ def process_new_change(model, change_dict: Dict, config: Mapping) -> List[Dict]:
     sr_ds = create_structured_report(template_ds, prediction_scores, code_meaning=code_meaning)
 
     # Send the structured report back to Orthanc
-    response = send_dicom_http(sr_ds)
+    response = send_dicom_http(sr_ds, session=session)
     response = json.loads(response.text)
 
     # Save scores to my own file
@@ -317,25 +326,38 @@ def process_new_change(model, change_dict: Dict, config: Mapping) -> List[Dict]:
     delete_created_sr = False
     if delete_created_sr:
         base_url = get_base_url()
-        requests.delete(f"{base_url}/instances/{response['ID']}")
+        session.delete(f"{base_url}/instances/{response['ID']}")
 
     logger.debug(f"Processed series {group_id}")
 
     return all_image_instances
 
 
-def delete_multiple_instances(instance_ids: List[str], base_url=None):
+def delete_multiple_instances(instance_ids: List[str], base_url=None, session=None):
     if base_url is None:
         base_url = get_base_url()
+    if session is None:
+        session = get_orthanc_session()
 
     for instance_id in instance_ids:
         instance_path = f"instances/{instance_id}"
-        requests.delete(f"{base_url}/{instance_path}")
+        session.delete(f"{base_url}/{instance_path}")
 
     return len(instance_ids)
 
+@functools.lru_cache
+def get_orthanc_session() -> requests.Session:
+    username = os.getenv("ORTHANC_USERNAME", "ark")
+    password = os.getenv("ORTHANC_PASSWORD", "ark")
+    orthanc_auth = (username, password)
+
+    _session = requests.Session()
+    _session.auth = orthanc_auth
+    return _session
 
 def main():
+    api.config.common_setup()
+
     loglevel = os.environ.get(LOGLEVEL_KEY, "INFO")
     logger = logging_utils.configure_logger(loglevel, LOGGER_NAME)
 
@@ -345,9 +367,33 @@ def main():
     logger.debug(f"Model: {config['MODEL_NAME']}")
 
     polling_interval = os.getenv("ORTHANC_POLLING_INTERVAL", 60)
+    session = get_orthanc_session()
 
     # If set to true, will delete images from Orthanc after processing
     no_store_images = os.getenv("ORTHANC_NO_STORE_IMAGES", "true").lower() == "true"
+
+    # Ping Orthanc to check if it is up
+    base_url = get_base_url()
+    max_tries = 3
+    orthanc_reachable = False
+    for _ in range(max_tries):
+        try:
+            response = session.get(f"{base_url}/system")
+            if response.status_code != 200:
+                logger.error(f"Orthanc is not available at {base_url}")
+                time.sleep(polling_interval)
+            else:
+                orthanc_reachable = True
+                break
+        except Exception as e:
+            logger.error(f"Error connecting to Orthanc at {base_url}: {e}")
+            logger.debug(traceback.format_exc())
+            time.sleep(polling_interval)
+
+    if not orthanc_reachable:
+        return
+
+    logger.info(f"Orthanc is available at {base_url}")
 
     while True:
         # Load metadata about the last processed change
@@ -356,7 +402,7 @@ def main():
 
         try:
             # Retrieve changes from Orthanc
-            changes, Last = get_changes(since=Last)
+            changes, Last = get_changes(since=Last, session=session)
 
             if not changes:
                 logger.debug("No new changes found")
@@ -367,7 +413,7 @@ def main():
             for change_dict in changes:
                 series_id, change_seq = change_dict["ID"], change_dict["Seq"]
 
-                all_image_instances = process_new_change(model, change_dict, config)
+                all_image_instances = process_new_change(model, change_dict, config, session=session)
 
                 # If indicated, delete the images from Orthanc after processing
                 if no_store_images:
