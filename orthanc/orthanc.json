@@ -1,9 +1,9 @@
 {
   "Name": "ArkOrthanc",
   "StorageDirectory": "/var/lib/orthanc/db",
-  "DicomAet": "ORTHANC",
+  "DicomAet": "${ARK_AE_TITLE:-ARK_AE}",
   "HttpPort": 8042,
-  "DicomPort": 4242,
+  "DicomPort": $ARK_DICOM_PORT,
   "RemoteAccessAllowed": true,
   "AuthenticationEnabled": true,
   "RegisteredUsers": {
