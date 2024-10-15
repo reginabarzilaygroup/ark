@@ -1,8 +1,5 @@
 FROM sybil:v1.6.1_dev
 
-RUN apt-get update && apt-get install -y --no-install-recommends orthanc \
-&& rm -rf /var/lib/apt/lists/*
-
 EXPOSE 5000 8000 4242 8042
 
 ENV NAME=ark

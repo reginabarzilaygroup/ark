@@ -13,7 +13,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    dcmtk python3-sklearn-lib git wget unzip \
+    dcmtk python3-sklearn-lib git wget unzip orthanc \
 && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /wheels /wheels
