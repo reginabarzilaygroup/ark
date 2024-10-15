@@ -33,6 +33,7 @@ ARG ARK_COMMIT=v0.8.0
 RUN git clone https://github.com/reginabarzilaygroup/ark.git
 RUN cd ark && git checkout ${ARK_COMMIT} \
     && pip install --no-cache-dir --disable-pip-version-check -e .
+RUN mkdir -p /root/.ark
 
 WORKDIR /app/ark
 ENV NAME=ark
