@@ -45,7 +45,7 @@ curl -s -X POST -F 'data={}' \
 -F 'dicom=@mirai_demo_data/mlol2.dcm' \
 -F 'dicom=@mirai_demo_data/ccr1.dcm' \
 -F 'dicom=@mirai_demo_data/ccl1.dcm' \
-http://localhest:5000/dicom/files
+http://localhost:5000/dicom/files
 ```
 
 With a larger number of files, it may be more convenient to have them all contained in a zip file.
